@@ -1,82 +1,99 @@
-# GMIN Inspeções — Mina TZ
+# GMIN Inspeções — Mina TZ (v1.1)
 
-Aplicativo web estático e **offline-first**, criado para relatórios de inspeção de equipamentos móveis da Mina Tocantinzinho. Não exige Node, serviços em nuvem, banco externo ou bibliotecas online.
+Editor de relatórios técnico **offline-first**, feito em HTML, CSS e JavaScript sem bibliotecas externas. Mantém compatibilidade com relatórios da versão 1.0. Aplicativo estático adequado para GitHub Pages ou hospedagem corporativa HTTPS.
 
-## Funcionalidades
+## Novidades da versão 1.1
 
-- Marca Mina TZ no cabeçalho; título sugerido pela data e hora, editável.
-- Linhas de altura automática; cada linha pode conter **texto**, **fotos com legendas** ou **lista/checklist**.
-- Botão `+` abaixo de cada linha, alça `⋮⋮` para arrastar no mouse ou no tablet e menu `⋯` para editar, duplicar e excluir.
-- Fotos importadas da câmera/galeria e reduzidas para até 1800 pixels para economizar armazenamento.
-- Salvamento automático **local** com IndexedDB (inclusive fotos). Ao retornar, o relatório pode ser retomado no mesmo navegador e dispositivo.
-- Exportação **HTML** independente (com fotos embutidas), **Word .docx**, **Excel .xlsx** (aba de dados e aba de fotografias com imagens) e **PDF** via caixa nativa de impressão do navegador, escolhendo *Salvar como PDF*.
-- Exportação/importação `.json` para backup e continuidade da edição em outro dispositivo.
-- Instalação como PWA a partir de GitHub Pages / HTTPS. Após o primeiro carregamento online, os arquivos do aplicativo ficam disponíveis no cache offline.
+- Cabeçalho editável com **TAG**, **modelo**, **horímetro (h)** e **odômetro (km)**.
+- Botão **Checklists** no canto superior direito, com filtragem automática pelo modelo digitado e pesquisa manual.
+- **10 modelos de checklist**, com **474 itens** reais extraídos das planilhas fornecidas. Todos os textos ficam empacotados em `js/checklists-data.js`, sem conexão externa.
+- Cada ponto do checklist é uma linha independente, rearranjável pela alça `⋮⋮`.
+- Bloco **Avaliação** disponível como quarto botão em linhas vazias. Campo de comando livre, opções **OK** e **Não OK**:
+  - **OK**: bloco verde.
+  - **Não OK**: escolha obrigatoriamente a severidade na prática de campo (Monitorar — amarelo; Anormal — laranja; Crítico — vermelho; Muito Crítico — vermelho escuro e negrito), insira comentários e fotos.
+- Exportadores HTML, DOCX, XLSX e PDF via impressão incluem os campos da máquina e os novos blocos de avaliação.
+- Importação de backups `.json` da versão 1.0 ou 1.1. Os dados da v1.0 no IndexedDB são lidos e migrados em memória; a base de armazenamento mantém o mesmo nome.
+- Cache de PWA atualizado (`gmin-inspecoes-v1.1.0`) com a biblioteca local das checklists.
 
 ## Estrutura do repositório
 
 ```text
 GMIN_Inspecoes_App/
-├── index.html               # Interface
-├── css/styles.css           # Tema corporativo + impressão
-├── js/app.js                # Blocos, edição, fotos, organização
-├── js/storage.js            # IndexedDB
-├── js/exports.js            # HTML, PDF, DOCX, XLSX
-├── js/zip.js                # Pacotes Office Open XML sem dependências
-├── js/logo-data.js          # Identidade visual incorporada em exports
-├── assets/                  # Marca e ícones locais
-├── service-worker.js        # Cache offline da aplicação
-├── manifest.webmanifest     # Instalação no tablet
-├── .nojekyll
-└── README.md
+├── index.html
+├── css/styles.css
+├── js/app.js
+├── js/checklists-data.js       # NOVO: modelos locais
+├── js/exports.js
+├── js/storage.js               # Inalterado
+├── js/zip.js                   # Inalterado
+├── js/logo-data.js             # Inalterado
+├── assets/                     # Inalterados
+├── service-worker.js
+├── manifest.webmanifest        # Inalterado
+├── tests/test_exports.cjs
+├── ISSUE_GITHUB.md
+├── README.md
+└── .nojekyll
 ```
 
-## Rodar localmente
+## Atualizar uma instalação v1.0 (GitHub Pages)
 
-**Forma rápida:** abra `index.html` no Chrome ou Edge. A interface foi desenvolvida em JavaScript clássico e não exige servidor. O navegador pode restringir IndexedDB ao abrir diretamente como `file://`; se o status indicar falha de armazenamento, use um servidor local.
+1. No dispositivo antigo, abra `⋯ → Exportar projeto editável (.json)` e guarde o backup em local seguro. **Não limpe os dados do site nem desinstale o PWA.**
+2. Substitua os arquivos modificados listados na estrutura acima e inclua `js/checklists-data.js`, preservando os demais arquivos v1.0.
+3. Faça o commit e publique a atualização no GitHub Pages.
+4. Com o tablet **online**, abra o aplicativo, aguarde carregar, feche e reabra/atualize para ativar o novo service worker e garantir que o cache `v1.1.0` substituiu o anterior.
+5. Teste o carregamento de um checklist e fotos; desligue Wi-Fi e dados móveis, feche o aplicativo, abra novamente e valide uso offline.
+6. Se um dado antigo não aparecer, recupere pelo menu `⋯ → Importar projeto (.json)` usando o backup da etapa 1.
 
-**Forma recomendada:** com Python instalado:
+**Importante:** se abrir `index.html` diretamente como arquivo local (`file://`), os arquivos da pasta precisam permanecer juntos. Os recursos básicos funcionam sem rede, mas o cache de PWA só se aplica em HTTPS/localhost.
 
-```bash
-cd GMIN_Inspecoes_App
-python -m http.server 8000
-```
+## Funcionamento
 
-Acesse `http://localhost:8000`. Para teste em tablet, publique em HTTPS com GitHub Pages.
+O documento é composto de linhas independentes, com alça para arrastar, menu `⋯` (editar/duplicar/excluir) e botão `+` para criar nova linha. Os blocos podem ser texto, fotos, listas ou avaliações. Os checklists pré-definidos apenas inserem vários blocos de avaliação previamente preenchidos.
 
-## Publicar no GitHub Pages
+A filtragem de checklists é um facilitador, **não um bloqueio**: deixe o campo de modelo vazio ou limpe a pesquisa para ver todos os modelos. Para a linha pesada há modelos genéricos e específicos. Um checklist acrescentado ao relatório não apaga conteúdo anterior.
 
-1. Crie um repositório (privado apenas se a política da empresa permitir; GitHub Pages pode expor conteúdo conforme plano/configuração).
-2. Envie os arquivos desta pasta para a **raiz** do repositório.
-3. Vá em **Settings → Pages → Build and deployment → Deploy from a branch**; selecione `main` e `/ (root)`.
-4. Abra a URL fornecida; quando estiver online, use o menu do navegador **Instalar aplicativo / Adicionar à tela inicial**.
-5. Faça o primeiro carregamento, salve um teste e desligue o Wi-Fi para validar offline no dispositivo real.
+### Formatos de exportação
 
-> Atenção: ao publicar o código, **não envie relatórios operacionais nem fotografias reais** para o GitHub. O projeto contém somente a ferramenta. Os dados ficam no navegador do dispositivo, não no repositório.
-
-## Exportações e backup
-
-| Saída | Conteúdo | Observação |
+| Formato | Conteúdo | Característica |
 | --- | --- | --- |
-| PDF | Título, marca, textos, listas e fotos | Abre a impressão: escolha **Salvar como PDF** |
-| HTML | Relatório completo, com fotos incorporadas | Pode ser aberto offline, mas não é o editor |
-| Word `.docx` | Relatório editável no Word, com imagens | Não preserva blocos interativos |
-| Excel `.xlsx` | Dados organizados e fotografias em segunda aba | Não substitui os arquivos do projeto |
-| Projeto `.json` | Estrutura original completa, com fotos | **Único formato para reabrir no editor** |
+| PDF | Identificação da máquina e blocos do relatório, fotos e cores | Abre a impressão nativa: escolha *Salvar como PDF* |
+| HTML | Relatório independente com identidade visual e fotos embutidas | Abre offline, não é o editor |
+| Word `.docx` | Identificação, avaliações, comentários e fotografias | Editável no Word |
+| Excel `.xlsx` | Aba `Relatório` tabular e aba `Fotografias` com imagens | Permite análises posteriores |
+| Backup `.json` | Estado completo editável, incluindo fotos | Para continuar a edição ou migrar de tablet |
 
-O histórico do navegador pode ser limpo automaticamente pelo usuário, sistema ou políticas corporativas. Faça backups `.json` periodicamente e mantenha-os em local aprovado pela TI.
+### Biblioteca pré-instalada
 
-## Segurança, governança e limitações
+| Modelo | Itens | Fonte |
+| --- | ---: | --- |
+| Escavadeira CAT 6030 | 49 | `CHECK LIST 6030.xlsx` |
+| Perfuratrizes DR410i / DI650i | 55 | `CHECK LIST PERFURATRIZES.xlsx` |
+| Caminhão articulado | 41 | `Checklist_ARTICULADO_PT.xlsx` |
+| Caminhão fora de estrada | 43 | `Checklist_CAMINHAO_PT.xlsx` |
+| Carregadeira | 44 | `Checklist_CARREGADEIRA_PT.xlsx` |
+| Escavadeira hidráulica | 49 | `Checklist_ESCAVADEIRA_PT.xlsx` |
+| Motoniveladora | 43 | `Checklist_MOTONIVELADORA_PT.xlsx` |
+| Rolo compactador | 40 | `Checklist_ROLO_PT.xlsx` |
+| Trator de esteiras | 47 | `Checklist_TRATOR_PT.xlsx` |
+| Trommel | 63 | `Checklist_Trommel.xlsx` |
 
-- **Não há login, nuvem ou integração com SAP PM nesta versão.** O relatório não cria Notificações SAP automaticamente.
-- Funciona offline após carregamento inicial (PWA em HTTPS); fotos e texto ficam **armazenados localmente, sem criptografia própria**. Use somente dispositivos corporativos gerenciados, conforme orientação de Segurança da Informação.
-- Recomenda-se iniciar com fotos **não sensíveis** ou dados fictícios até obter autorização para o piloto.
-- O aplicativo cria relatórios de formato livre; não é um banco de dados relacional de falhas nem substitui o SAP.
-- A capacidade e retenção do armazenamento local dependem do dispositivo/navegador. Fotos são comprimidas antes de salvar; monitore espaço livre.
-- Exportação PDF depende das opções de impressão do sistema operacional/navegador. Caso a aba de impressão não abra, habilite pop-ups para o site.
-- O modo offline não sincroniza relatórios entre usuários/dispositivos. Compartilhamento é feito por exportação, não por envio automático.
-- Não use GitHub Pages público para armazenar documentação ou dados internos; consulte o TI sobre hospedagem interna.
+O texto de cada ponto de inspeção segue a planilha de origem. A biblioteca é estática: mudanças nos checklists exigem uma nova versão do arquivo `js/checklists-data.js` e nova publicação do aplicativo.
 
-## Licenças e identidade visual
+## Testes
 
-Marca Mina TZ fornecida para este projeto; manter o uso conforme as diretrizes de identidade visual da G Mining Ventures. Nenhuma dependência JS ou fonte externa é necessária.
+Execute `node tests/test_exports.cjs` na raiz do projeto. O teste valida que existem 10 modelos/474 itens e gera documentos exemplo em `tests/artifacts/`. A qualidade visual e a gravação de fotos offline devem ser verificadas **no tablet real**.
+
+## Segurança e limitações
+
+- Sem sincronização remota: dados e fotos ficam no **IndexedDB do dispositivo**, sem criptografia própria. Utilizar dispositivos corporativos e a política de TI.
+- A biblioteca de checklists é parte do **código do aplicativo**. Nunca suba fotos, backups JSON ou relatórios internos ao GitHub.
+- O sistema **não cria notificações SAP** e não substitui o registro formal nem a avaliação técnica humana.
+- As severidades registram a percepção do inspetor; **não são critérios de liberação de equipamento** ou classificação automática de prioridade SAP.
+- Os campos de TAG, horímetro e odômetro são livres nesta versão, sem validação por cadastro oficial.
+- Ao alternar um item de Não OK para OK, os comentários/fotos anteriores ficam **ocultos, mas preservados no backup** e reaparecem se voltar a Não OK; exportações imprimem apenas os dados da condição ativa.
+- Em instalações antigas com service worker, a atualização pode exigir fechar e reabrir o aplicativo após a primeira conexão à internet.
+
+## GitHub Issues e atualização
+
+Copie `ISSUE_GITHUB.md` ao criar uma issue de melhoria. Trabalhe preferencialmente em uma branch `feature/checklists-offline-v1.1`, abra um Pull Request com `Closes #NUMERO_DA_ISSUE` e só publique após validar offline no tablet.
