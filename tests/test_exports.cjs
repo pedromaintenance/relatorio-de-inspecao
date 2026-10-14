@@ -7,8 +7,12 @@ for (const file of ['js/logo-data.js', 'js/zip.js', 'js/exports.js', 'js/checkli
   vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
 }
 const templates = ctx.GMIN_CHECKLISTS;
-assert.strictEqual(templates.length, 10);
-assert.strictEqual(templates.reduce((sum, t) => sum + t.items.length, 0), 474);
+assert.strictEqual(templates.length, 11);
+assert.strictEqual(templates.reduce((sum, t) => sum + t.items.length, 0), 482);
+assert.strictEqual(templates[0].id, 'check-11');
+assert.strictEqual(templates[0].title, 'Inspeção de Caçamba');
+assert.strictEqual(templates[0].featured, true);
+assert.deepStrictEqual(Array.from(templates[0].items, item => item.command), ["Caçamba - Capas de Unha","Caçamba - Adaptadores","Caçamba - Lábio","Caçamba - Entredentes","Caçamba - Protetor Lateral","Caçamba - Protetor de Canto","Caçamba - Chapas de Desgaste","Caçamba - Estrutura"]);
 const png = 'data:image/png;base64,' + fs.readFileSync(path.join(root, 'assets/logo-tz.png')).toString('base64');
 const sample = {
   version: 2,

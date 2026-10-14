@@ -281,8 +281,14 @@
   }));
   function normalize(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
   function renderChecklistChoices() {
-    const query = normalize($('#checklistFilter').value || state.meta.model);
-    const visible = checklists.filter(item => !query || [item.title, ...item.models].some(term => normalize(term).includes(query) || query.includes(normalize(term))));
+    const manualQuery = normalize($('#checklistFilter').value);
+    const machineQuery = normalize(state.meta.model);
+    const matches = (item, query) => [item.title, ...item.models].some(term => normalize(term).includes(query) || query.includes(normalize(term)));
+    // Checklists em destaque ficam no topo, mesmo quando o modelo da máquina está preenchido.
+    // Uma pesquisa digitada manualmente continua filtrando todos os resultados.
+    const visible = checklists.filter(item => manualQuery
+      ? matches(item, manualQuery)
+      : item.featured || !machineQuery || matches(item, machineQuery));
     const count = checklists.reduce((acc, item) => acc + item.items.length, 0);
     $('#checklistChoices').innerHTML = visible.length ? visible.map(item => `<div class="checklist-choice">
       <div><b>${esc(item.title)}</b><span>${item.items.length} itens · ${esc(item.models.join(', '))}</span></div>
