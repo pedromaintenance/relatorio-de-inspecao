@@ -1,19 +1,20 @@
-# GMIN Inspeções — Mina TZ (v1.1.1)
+# GMIN Inspeções — Mina TZ (v1.1.2)
 
 Editor de relatórios técnico **offline-first**, feito em HTML, CSS e JavaScript sem bibliotecas externas. Mantém compatibilidade com relatórios da versão 1.0. Aplicativo estático adequado para GitHub Pages ou hospedagem corporativa HTTPS.
 
-## Recursos disponíveis na versão 1.1.1
+## Recursos disponíveis na versão 1.1.2
 
 - Cabeçalho editável com **TAG**, **modelo**, **horímetro (h)** e **odômetro (km)**.
 - Botão **Checklists** no canto superior direito, com filtragem automática pelo modelo digitado e pesquisa manual. A **Inspeção de Caçamba** permanece na primeira posição quando não há pesquisa manual, mesmo com um modelo de máquina preenchido.
 - **11 modelos de checklist**, com **482 itens** reais extraídos das planilhas fornecidas. Todos os textos ficam empacotados em `js/checklists-data.js`, sem conexão externa.
 - Cada ponto do checklist é uma linha independente, rearranjável pela alça `⋮⋮`.
+- **Inserção de fotos:** tanto no bloco Fotografia quanto em avaliações **Não OK**, há opções **Tirar foto** (captura nativa do dispositivo, preferindo a câmera traseira quando disponível) e **Escolher da galeria** (várias imagens). A foto capturada passa pela mesma compactação, salvamento offline e exportação que as imagens selecionadas da galeria. Em navegadores sem suporte à captura nativa, o botão de câmera pode abrir o seletor de arquivos em vez da câmera.
 - Bloco **Avaliação** disponível como quarto botão em linhas vazias. Campo de comando livre, opções **OK** e **Não OK**:
   - **OK**: bloco verde.
   - **Não OK**: escolha obrigatoriamente a severidade na prática de campo (Monitorar — amarelo; Anormal — laranja; Crítico — vermelho; Muito Crítico — vermelho escuro e negrito), insira comentários e fotos.
 - Exportadores HTML, DOCX, XLSX e PDF via impressão incluem os campos da máquina e os novos blocos de avaliação.
 - Importação de backups `.json` da versão 1.0 ou 1.1. Os dados da v1.0 no IndexedDB são lidos e migrados em memória; a base de armazenamento mantém o mesmo nome.
-- Cache de PWA atualizado (`gmin-inspecoes-v1.1.1`) com a biblioteca local das checklists.
+- Cache de PWA atualizado (`gmin-inspecoes-v1.1.2`) com a biblioteca local das checklists.
 
 ## Estrutura do repositório
 
@@ -41,7 +42,7 @@ GMIN_Inspecoes_App/
 1. No dispositivo antigo, abra `⋯ → Exportar projeto editável (.json)` e guarde o backup em local seguro. **Não limpe os dados do site nem desinstale o PWA.**
 2. Substitua os arquivos modificados listados na estrutura acima e inclua `js/checklists-data.js`, preservando os demais arquivos v1.0.
 3. Faça o commit e publique a atualização no GitHub Pages.
-4. Com o tablet **online**, abra o aplicativo, aguarde carregar, feche e reabra/atualize para ativar o novo service worker e garantir que o cache `v1.1.1` substituiu o anterior.
+4. Com o tablet **online**, abra o aplicativo, aguarde carregar, feche e reabra/atualize para ativar o novo service worker e garantir que o cache `v1.1.2` substituiu o anterior.
 5. Teste o carregamento de um checklist e fotos; desligue Wi-Fi e dados móveis, feche o aplicativo, abra novamente e valide uso offline.
 6. Se um dado antigo não aparecer, recupere pelo menu `⋯ → Importar projeto (.json)` usando o backup da etapa 1.
 

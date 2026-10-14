@@ -6,6 +6,19 @@ ctx.window = ctx; vm.createContext(ctx);
 for (const file of ['js/logo-data.js', 'js/zip.js', 'js/exports.js', 'js/checklists-data.js']) {
   vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
 }
+
+// Contrato da interface de inserção de fotografias (captura nativa e galeria).
+const appSource = fs.readFileSync(path.join(root, 'js/app.js'), 'utf8');
+const photoMarkupCode = appSource.slice(appSource.indexOf('  function photoMarkup(row) {'), appSource.indexOf('  function assessmentMarkup(row) {'));
+assert(photoMarkupCode.includes('data-action="photo-camera"'), 'Faltou botão Tirar foto');
+assert(photoMarkupCode.includes('data-action="photo-gallery"'), 'Faltou botão Galeria');
+assert(photoMarkupCode.includes('capture="environment"'), 'Faltou solicitação de câmera traseira');
+assert(photoMarkupCode.includes('class="photo-input photo-camera-input"'), 'Faltou campo de captura');
+assert(photoMarkupCode.includes('multiple class="photo-input photo-gallery-input"'), 'Faltou seleção múltipla na galeria');
+assert(appSource.includes("if (action === 'photo-camera')") && appSource.includes("querySelector('.photo-camera-input')?.click()"), 'Botão de câmera não conectado');
+assert(appSource.includes("if (action === 'photo-gallery')") && appSource.includes("querySelector('.photo-gallery-input')?.click()"), 'Botão da galeria não conectado');
+assert(appSource.includes("if (el.classList.contains('photo-input'))"), 'Pipeline de processamento de imagem não compartilhado');
+
 const templates = ctx.GMIN_CHECKLISTS;
 assert.strictEqual(templates.length, 11);
 assert.strictEqual(templates.reduce((sum, t) => sum + t.items.length, 0), 482);

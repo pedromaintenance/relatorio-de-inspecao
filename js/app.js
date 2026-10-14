@@ -70,8 +70,12 @@
           value="${esc(photo.caption)}" placeholder="Legenda da foto" aria-label="Legenda da foto ${i + 1}">
           <button type="button" data-action="photo-remove" class="remove-photo no-print" aria-label="Remover fotografia">✕</button></div>
       </div>`).join('')}</div>
-      <button type="button" data-action="photo-add" class="add-photo no-print">＋ Adicionar fotografia</button>
-      <input type="file" accept="image/*" multiple class="photo-input" hidden>`;
+      <div class="photo-actions no-print" role="group" aria-label="Adicionar fotografias">
+        <button type="button" data-action="photo-camera" class="add-photo photo-camera-button">📷 Tirar foto</button>
+        <button type="button" data-action="photo-gallery" class="add-photo photo-gallery-button">＋ Escolher da galeria</button>
+      </div>
+      <input type="file" accept="image/*" capture="environment" class="photo-input photo-camera-input" aria-label="Tirar foto usando a câmera" hidden>
+      <input type="file" accept="image/*" multiple class="photo-input photo-gallery-input" aria-label="Selecionar fotografias da galeria ou de arquivos" hidden>`;
   }
   function assessmentMarkup(row) {
     const val = row.assessment || '';
@@ -158,8 +162,8 @@
     if (action === 'choose-text') { mutateRow(row, r => { r.type = 'text'; r.text = ''; }, true); return; }
     if (action === 'choose-list') { mutateRow(row, r => { r.type = 'list'; r.items = [{ id: uid(), text: '', done: false }]; }, true); return; }
     if (action === 'choose-photo') {
-      mutateRow(row, r => { r.type = 'photo'; r.photos = []; });
-      rowsEl.querySelector(`.row-unit[data-row-id="${CSS.escape(row.id)}"] .photo-input`)?.click(); return;
+      // Exibe as duas formas de inserir imagem, sem abrir automaticamente o seletor de arquivos.
+      mutateRow(row, r => { r.type = 'photo'; r.photos = []; }); return;
     }
     if (action === 'choose-assessment') { mutateRow(row, r => Object.assign(r, { type: 'assessment', command: '', assessment: '', severity: '', comment: '', photos: [] }), true); return; }
     if (action === 'edit') { closeMenus(); rowsEl.querySelector(`.row-unit[data-row-id="${CSS.escape(row.id)}"]`)?.querySelector('textarea,input[type=text]')?.focus(); return; }
@@ -173,7 +177,12 @@
       rowsEl.querySelector(`.row-unit[data-row-id="${CSS.escape(row.id)}"] .list-entry:last-child [type=text]`)?.focus(); return;
     }
     if (action === 'list-remove') { row.items.splice(Number(button.closest('[data-list-index]').dataset.listIndex), 1); changed(); render(); return; }
-    if (action === 'photo-add') { button.closest('.row-unit').querySelector('.photo-input')?.click(); return; }
+    if (action === 'photo-camera') {
+      button.closest('.row-unit').querySelector('.photo-camera-input')?.click(); return;
+    }
+    if (action === 'photo-gallery') {
+      button.closest('.row-unit').querySelector('.photo-gallery-input')?.click(); return;
+    }
     if (action === 'photo-remove') {
       if (!confirm('Remover esta fotografia?')) return;
       row.photos.splice(Number(button.closest('[data-photo-index]').dataset.photoIndex), 1); changed(); render(); return;
