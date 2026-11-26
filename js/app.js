@@ -1,4 +1,4 @@
-/* GMIN Inspeções v1.1 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.2 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
@@ -177,7 +177,7 @@
     if (action === 'insert') { state.rows.splice(state.rows.indexOf(row) + 1, 0, newRow()); changed(); render(); return; }
     if (action === 'choose-header') { mutateRow(row,r=>{r.type='header';r.textStyle='title';},true); return; }
     if (action === 'choose-break') { mutateRow(row,r=>{r.type='page-break';}); return; }
-    if (action.startsWith('format-')) { const editor=button.closest('.row-unit').querySelector('.rich-editor'); if(!editor)return; const sel=window.getSelection(); if(!sel.anchorNode||!editor.contains(sel.anchorNode))editor.focus(); document.execCommand('styleWithCSS',false,false); document.execCommand(action.slice(7),false,null); row.rich=GMINExport.cleanRich(editor.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); return; }
+    if (action.startsWith('format-')) { const editor=button.closest('.row-unit').querySelector('.rich-editor'); if(!editor)return; const sel=window.getSelection(); if(!sel.anchorNode||!editor.contains(sel.anchorNode)||!editor.contains(sel.focusNode)){editor.focus();const range=document.createRange();range.selectNodeContents(editor);range.collapse(false);sel.removeAllRanges();sel.addRange(range);} document.execCommand('styleWithCSS',false,false); document.execCommand(action.slice(7),false,null); row.rich=GMINExport.cleanRich(editor.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); return; }
     if (action === 'choose-text') { mutateRow(row, r => { r.type = 'text'; r.text = ''; }, true); return; }
     if (action === 'choose-list') { mutateRow(row, r => { r.type = 'list'; r.items = [{ id: uid(), text: '', done: false }]; }, true); return; }
     if (action === 'choose-photo') {
@@ -232,7 +232,7 @@
     const el = event.target, row = getRow(el); if (!row) return;
     if (el.dataset.field === 'heading-style') { mutateRow(row,r=>{r.headingStyle=el.value;});return; }
     if (el.dataset.field === 'text-style') { mutateRow(row,r=>{r.textStyle=el.value;});return; }
-    if (el.dataset.field === 'columns') { mutateRow(row,r=>{r.columns=Number(el.value);});return; }
+    if (el.dataset.field === 'columns') { mutateRow(row,r=>{r.columns=Number(el.value);if(r.columns>1)r.largePhotos=false;});return; }
     if (el.dataset.field === 'large-photos') { mutateRow(row,r=>{r.largePhotos=el.checked;if(el.checked)r.columns=1;});return; }
     if (el.dataset.field === 'item-done') {
       const item = row.items[Number(el.closest('[data-list-index]').dataset.listIndex)];
@@ -382,7 +382,7 @@
   });
   $('#restoreButton').addEventListener('click', () => { $('#restoreInput').click(); closeMenus(); });
   function sanitizedPhoto(photo) {
-    if (!photo || !/^data:image\/(jpeg|png|webp);base64,/i.test(photo.dataUrl || '')) return null;
+    if (!photo || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(photo.dataUrl || '')) return null;
     return { id: uid(), dataUrl: photo.dataUrl, caption: String(photo.caption || '').slice(0, 500), note: String(photo.note || '').slice(0,10000),
       width: Number(photo.width) || 1000, height: Number(photo.height) || 800 };
   }
