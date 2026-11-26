@@ -1,4 +1,4 @@
-/* GMIN Relatórios v1.2 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.3 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
@@ -18,14 +18,14 @@
   const uid = () => globalThis.crypto?.randomUUID?.() || ('id-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   const machineEmpty = () => ({ tag: '', model: '', hours: '', odometer: '' });
   const newRow = (type = 'empty') => ({
-    id: uid(), type, text: '', rich: null, heading: '', headingStyle: 'section', textStyle: 'body', columns: 2, largePhotos: false, items: [], photos: [],
+    id: uid(), type, text: '', rich: null, heading: '', headingStyle: 'section', textStyle: 'body', columns: 2, largePhotos: false, items: [], photos: [], table: GMINDocument.table(), listMode:'check',
     command: '', system: '', method: '', assessment: '', severity: '', comment: '', source: ''
   });
   const defaultTitle = () => {
     const d = new Date();
     return `Relatório de Inspeção — ${d.toLocaleDateString('pt-BR')} às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
-  const fresh = () => ({ version: 3, id: uid(), title: defaultTitle(), meta: machineEmpty(), showMachine: true, kicker: 'ENGENHARIA & MANUTENÇÃO DE MINA',
+  const fresh = () => ({ version: 4, document: GMINDocument.defaults(), id: uid(), title: defaultTitle(), meta: machineEmpty(), showMachine: true, kicker: 'ENGENHARIA & MANUTENÇÃO DE MINA',
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), rows: [newRow()] });
 
   let state = fresh();
@@ -119,13 +119,14 @@
     if (row.type === 'empty') content = `<div class="choice-group">
       <button type="button" class="choice-button" data-action="choose-text"><span class="choice-icon">▤</span>Adicionar texto</button>
       <button type="button" class="choice-button" data-action="choose-photo"><span class="choice-icon">▧</span>Adicionar foto</button>
-      <button type="button" class="choice-button" data-action="choose-list"><span class="choice-icon">☷</span>Adicionar lista</button>
+      <button type="button" class="choice-button" data-action="choose-list"><span class="choice-icon">☷</span>Adicionar lista</button><button type="button" class="choice-button" data-action="choose-table"><span class="choice-icon">▦</span>Tabela</button>
       <button type="button" class="choice-button" data-action="choose-assessment"><span class="choice-icon">◉</span>Avaliação</button><button type="button" class="choice-button" data-action="choose-header"><span class="choice-icon">T</span>Cabeçalho</button><button type="button" class="choice-button" data-action="choose-break"><span class="choice-icon">↵</span>Quebra de página</button></div>`;
     if (row.type === 'text' || row.type === 'header') content = `<div class="row-content"><div class="block-heading no-print">${row.type==='header'?'Cabeçalho':'Texto'}</div>${richMarkup(row)}</div>`;
     if (row.type === 'page-break') content = '<div class="page-break-marker">↵ Quebra de página · início de nova página</div>';
-    if (row.type === 'list') content = `<div class="row-content"><div class="block-heading no-print">Lista</div><div class="list-items">
-      ${(row.items || []).map((item, i) => `<div class="list-entry" data-list-index="${i}"><input type="checkbox" data-field="item-done" aria-label="Marcar item como concluído" ${item.done ? 'checked' : ''}>
-      <input type="text" data-field="item-text" class="${item.done ? 'checked' : ''}" placeholder="Item da lista" aria-label="Item ${i + 1}" value="${esc(item.text)}">
+    if (row.type === 'table') content = '<div class="row-content"><div class="block-heading no-print">Tabela</div>'+GMINDocument.tableMarkup(row)+'</div>';
+    if (row.type === 'list') content = `<div class="row-content"><div class="block-heading no-print">Lista</div><label class="list-mode no-print">Estilo <select data-field="list-mode">${[['check','Checklist'],['bullet','Marcadores'],['number','Numerada']].map(([k,v])=>`<option value="${k}" ${row.listMode===k?'selected':''}>${v}</option>`).join('')}</select></label><div class="list-items">
+      ${(row.items || []).map((item, i) => `<div class="list-entry" data-list-index="${i}">${row.listMode==='check'?`<input type="checkbox" data-field="item-done" aria-label="Marcar item como concluído" ${item.done?'checked':''}>`:`<span class="list-prefix">${GMINDocument.prefix(row.listMode,i,false)}</span>`}
+      <input type="text" data-field="item-text" class="${row.listMode==='check'&&item.done ? 'checked' : ''}" placeholder="Item da lista" aria-label="Item ${i + 1}" value="${esc(item.text)}">
       <button type="button" class="remove-list-item no-print" data-action="list-remove" aria-label="Excluir item">✕</button></div>`).join('')}
       </div><button type="button" class="add-item no-print" data-action="list-add">＋ Adicionar item</button></div>`;
     if (row.type === 'photo') content = `<div class="row-content"><div class="block-heading no-print">Fotografias</div>${richMarkup(row)}${photoMarkup(row)}</div>`;
@@ -147,7 +148,7 @@
   }
   function mutateRow(row, fn, focus = false) { fn(row); changed(); render({ focusId: focus ? row.id : null }); }
   function deleteRow(row) {
-    const populated = Boolean(row.heading || row.text) || (row.type === 'assessment' ? Boolean(row.command || row.assessment || row.comment || row.photos?.length) :
+    const populated = Boolean(row.heading || row.text || (row.type==='table'&&row.table.rows.some(r=>r.some(c=>c.text.trim())))) || (row.type === 'assessment' ? Boolean(row.command || row.assessment || row.comment || row.photos?.length) :
       row.type === 'text' ? Boolean(row.text.trim()) : row.type === 'list' ? row.items.some(item => item.text.trim()) : row.type === 'photo' && row.photos.length);
     if (populated && !confirm('Excluir esta linha e todo o seu conteúdo?')) return;
     state.rows.splice(state.rows.indexOf(row), 1);
@@ -175,6 +176,8 @@
       closeMenus(); menu.hidden = wasOpen; return;
     }
     if (action === 'insert') { state.rows.splice(state.rows.indexOf(row) + 1, 0, newRow()); changed(); render(); return; }
+    if (action === 'choose-table') {mutateRow(row,r=>{r.type='table';r.table=GMINDocument.table();});return;}
+    if (action.startsWith('table-')) {const op=action.slice(6),ri=button.dataset.r==null?null:Number(button.dataset.r),ci=button.dataset.c==null?null:Number(button.dataset.c);if((op==='row-delete'||op==='col-delete')&&!confirm('Excluir e descartar o conteúdo da linha/coluna selecionada?'))return;mutateRow(row,r=>GMINDocument.tableEdit(r.table,op,ri,ci));return;}
     if (action === 'choose-header') { mutateRow(row,r=>{r.type='header';r.textStyle='title';},true); return; }
     if (action === 'choose-break') { mutateRow(row,r=>{r.type='page-break';}); return; }
     if (action.startsWith('format-')) { const editor=button.closest('.row-unit').querySelector('.rich-editor'); if(!editor)return; const sel=window.getSelection(); if(!sel.anchorNode||!editor.contains(sel.anchorNode)||!editor.contains(sel.focusNode)){editor.focus();const range=document.createRange();range.selectNodeContents(editor);range.collapse(false);sel.removeAllRanges();sel.addRange(range);} document.execCommand('styleWithCSS',false,false); document.execCommand(action.slice(7),false,null); row.rich=GMINExport.cleanRich(editor.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); return; }
@@ -213,6 +216,7 @@
   });
   rowsEl.addEventListener('input', event => {
     const el = event.target, row = getRow(el); if (!row) return;
+    if (el.dataset.field === 'table-cell') {row.table.rows[Number(el.dataset.r)][Number(el.dataset.c)].text=el.value;changed();}
     if (el.dataset.field === 'heading') { row.heading=el.value; changed(); }
     if (el.dataset.field === 'rich') { row.rich=GMINExport.cleanRich(el.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); }
     if (el.dataset.field === 'photo-note') { const photo=row.photos[Number(el.closest('[data-photo-index]').dataset.photoIndex)]; if(photo){photo.note=el.value;changed();} }
@@ -230,6 +234,8 @@
   });
   rowsEl.addEventListener('change', async event => {
     const el = event.target, row = getRow(el); if (!row) return;
+    if (el.dataset.field === 'table-header') {mutateRow(row,r=>{r.table.header=el.checked;});return;}
+    if (el.dataset.field === 'list-mode') {mutateRow(row,r=>{r.listMode=GMINDocument.listMode(el.value);});return;}
     if (el.dataset.field === 'heading-style') { mutateRow(row,r=>{r.headingStyle=el.value;});return; }
     if (el.dataset.field === 'text-style') { mutateRow(row,r=>{r.textStyle=el.value;});return; }
     if (el.dataset.field === 'columns') { mutateRow(row,r=>{r.columns=Number(el.value);if(r.columns>1)r.largePhotos=false;});return; }
@@ -387,14 +393,15 @@
       width: Number(photo.width) || 1000, height: Number(photo.height) || 800 };
   }
   function normalizeImported(data) {
-    if (![1, 2, 3].includes(data.version) || !Array.isArray(data.rows) || typeof data.title !== 'string') throw Error('Formato incompatível');
+    if (![1, 2, 3, 4].includes(data.version) || !Array.isArray(data.rows) || typeof data.title !== 'string') throw Error('Formato incompatível');
     return {
-      version: 3, id: uid(), title: data.title.slice(0, 180), showMachine: data.showMachine !== false, kicker: String(data.kicker ?? 'ENGENHARIA & MANUTENÇÃO DE MINA').slice(0,180),
+      version: 4, document: GMINDocument.control(data.document), id: uid(), title: data.title.slice(0, 180), showMachine: data.showMachine !== false, kicker: String(data.kicker ?? 'ENGENHARIA & MANUTENÇÃO DE MINA').slice(0,180),
       meta: Object.fromEntries(Object.keys(machineEmpty()).map(key => [key, String(data.meta?.[key] || '').slice(0, 120)])),
       createdAt: data.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(),
       rows: data.rows.slice(0, 1200).map(row => ({ ...newRow(),
-        type: ['empty', 'text', 'list', 'photo', 'assessment','header','page-break'].includes(row.type) ? row.type : 'empty',
+        type: ['empty', 'text', 'list', 'photo', 'assessment','header','page-break','table'].includes(row.type) ? row.type : 'empty',
         text: String(row.text || '').slice(0, 200000), rich: typeof row.rich==='string'?GMINExport.cleanRich(row.rich.slice(0,400000)):null, heading: String(row.heading||'').slice(0,500), headingStyle: ['title','section','subheading'].includes(row.headingStyle)?row.headingStyle:'section', textStyle: styleChoices.some(x=>x[0]===row.textStyle)?row.textStyle:'body', columns: [1,2,3,4].includes(Number(row.columns))?Number(row.columns):2, largePhotos: !!row.largePhotos,
+        table: GMINDocument.table(row.table), listMode: GMINDocument.listMode(row.listMode),
         items: Array.isArray(row.items) ? row.items.slice(0, 500).map(item => ({ id: uid(), text: String(item.text || ''), done: !!item.done })) : [],
         photos: Array.isArray(row.photos) ? row.photos.slice(0, 80).map(sanitizedPhoto).filter(Boolean) : [],
         command: String(row.command || '').slice(0, 5000), system: String(row.system || '').slice(0, 100),
@@ -408,7 +415,26 @@
   function hydrateInputs() {
     titleEl.value = state.title; resizeTitle(); $('#showMachine').checked=state.showMachine!==false;document.querySelector('.asset-fields').hidden=state.showMachine===false;$('#reportKicker').value=state.kicker;
     document.querySelectorAll('[data-meta]').forEach(el => { el.value = state.meta?.[el.dataset.meta] || ''; });
+    document.querySelectorAll('[data-doc]').forEach(el=>{const val=state.document[el.dataset.doc];if(el.type==='checkbox')el.checked=!!val;else el.value=val||'';});$('#docFields').hidden=!state.document.enabled;
   }
+  const templatePanel=$('#templatePanel'),templateChoices=$('#templateChoices');
+  function fillTemplates(){
+    const all=[...GMINDocument.builtins,...GMINDocument.load()];
+    templateChoices.innerHTML=all.map((t,i)=>'<div class="checklist-choice"><div><b>'+esc(t.name)+'</b><span>'+(i<GMINDocument.builtins.length?'Modelo de fábrica':'Modelo pessoal')+'</span></div><div class="template-actions"><button type="button" data-tpl-use="'+i+'">Usar</button>'+(i>=GMINDocument.builtins.length?'<button type="button" data-tpl-export="'+i+'">JSON</button><button type="button" data-tpl-delete="'+i+'">Excluir</button>':'')+'</div></div>').join('');
+  }
+  $('#templatesButton').addEventListener('click',()=>{templatePanel.hidden=!templatePanel.hidden;$('#templatesButton').setAttribute('aria-expanded',String(!templatePanel.hidden));if(!templatePanel.hidden){fillTemplates();templatePanel.scrollIntoView({block:'nearest'});}});
+  $('#closeTemplatePanel').addEventListener('click',()=>{templatePanel.hidden=true;$('#templatesButton').setAttribute('aria-expanded','false');});
+  $('#saveTemplateButton').addEventListener('click',()=>{const name=prompt('Nome do modelo (os textos e estruturas serão mantidos; fotos, TAG e avaliações serão removidas):',state.title);if(!name?.trim())return;try{const items=GMINDocument.load();items.push({id:uid(),name:name.trim().slice(0,180),project:GMINDocument.templateProject(state)});GMINDocument.save(items);fillTemplates();toast('Modelo salvo neste dispositivo.');}catch(e){toast('Não foi possível salvar o modelo: '+e.message);}});
+  templateChoices.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;const all=[...GMINDocument.builtins,...GMINDocument.load()],idx=Number(b.dataset.tplUse??b.dataset.tplExport??b.dataset.tplDelete),t=all[idx];if(!t)return;
+    if(b.dataset.tplUse!=null){if(!confirm('O modelo substituirá o relatório atual. Exporte o backup JSON antes de continuar.'))return;try{state=normalizeImported(t.project);if(!state.rows.length)state.rows.push(newRow());hydrateInputs();render();renderChecklistChoices();saveNow();templatePanel.hidden=true;$('#templatesButton').setAttribute('aria-expanded','false');toast('Modelo carregado.');}catch(err){toast('Modelo inválido: '+err.message);}}
+    if(b.dataset.tplExport!=null)GMINExport.download(new Blob([JSON.stringify({kind:'gmin-template',name:t.name,project:t.project},null,2)],{type:'application/json'}),GMINExport.basename(t.name)+'_modelo.json');
+    if(b.dataset.tplDelete!=null&&confirm('Excluir o modelo pessoal?')){try{GMINDocument.save(GMINDocument.load().filter(x=>x.id!==t.id));fillTemplates();}catch(err){toast(err.message);}}
+  });
+  $('#importTemplateButton').addEventListener('click',()=>$('#templateInput').click());
+  $('#templateInput').addEventListener('change',async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;try{if(file.size>5*1024*1024)throw Error('Limite de 5 MB');const obj=JSON.parse(await file.text());if(obj.kind!=='gmin-template'||typeof obj.name!=='string')throw Error('Arquivo de modelo inválido');const project=GMINDocument.templateProject(normalizeImported(obj.project));const items=GMINDocument.load();items.push({id:uid(),name:obj.name.slice(0,180),project});GMINDocument.save(items);fillTemplates();toast('Modelo importado.');}catch(err){toast('Falha: '+err.message);}});
+  document.querySelectorAll('[data-doc]').forEach(el=>el.addEventListener(el.type==='checkbox'?'change':'input',()=>{state.document[el.dataset.doc]=el.type==='checkbox'?el.checked:el.value;$('#docFields').hidden=!state.document.enabled;changed();}));
+  $('#previewButton').addEventListener('click',()=>{try{GMINExport.exportFile(state,'pdf');}catch(err){toast(err.message);}});
   $('#restoreInput').addEventListener('change', async event => {
     const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
     if (file.size > 80 * 1024 * 1024) { toast('Arquivo maior que 80 MB.'); return; }
@@ -430,7 +456,7 @@
   async function init() {
     try {
       const stored = await GMINStorage.load();
-      if (stored?.rows && [1, 2, 3].includes(stored.version)) {
+      if (stored?.rows && [1, 2, 3, 4].includes(stored.version)) {
         // Preserva dados históricos v1.0; migra formato em memória sem apagar a base antiga antecipadamente.
         state = normalizeImported(stored);
         // Reaproveita IDs de bloco quando restaurando dados locais.
