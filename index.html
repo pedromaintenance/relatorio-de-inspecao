@@ -8,12 +8,12 @@
   <link rel="icon" href="assets/logo-tz.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/styles.css">
-  <title>GMIN | Relatório de Inspeção</title>
+  <title>GMIN | Relatórios Técnicos</title>
 </head>
 <body>
   <header class="app-top no-print">
     <div class="app-top-inner">
-      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Inspeções</i></b><small>Relatórios de campo • Mina TZ</small></span></div>
+      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Relatórios</i></b><small>Documentos técnicos • Mina TZ</small></span></div>
       <div class="top-right">
         <span class="save-status" id="saveStatus" role="status" aria-live="polite"><span class="status-dot"></span> Preparando...</span>
         <button type="button" id="checklistsButton" class="checklists-top-btn" aria-expanded="false" aria-controls="checklistPanel">☷ Checklists</button>
@@ -51,17 +51,18 @@
       <div class="report-head">
         <div class="report-head-top">
           <img class="report-logo" src="assets/logo-tz.png" alt="G Mining Mina TZ">
-          <span class="report-kicker">ENGENHARIA &amp; MANUTENÇÃO DE MINA</span>
+          <input type="text" id="reportKicker" class="report-kicker" maxlength="180" aria-label="Cabeçalho institucional" title="Editar cabeçalho institucional">
         </div>
         <label for="reportTitle" class="title-label no-print">TÍTULO DO RELATÓRIO <span>• pode editar</span></label>
         <textarea id="reportTitle" class="report-title" rows="1" maxlength="180" spellcheck="true" placeholder="Título do relatório" aria-label="Título do relatório"></textarea>
+        <label class="machine-toggle no-print"><input type="checkbox" id="showMachine" checked> Exibir identificação da máquina no relatório</label>
         <div class="asset-fields" aria-label="Identificação do equipamento">
           <label>TAG da máquina<input id="machineTag" data-meta="tag" type="text" maxlength="70" placeholder="Ex.: 040-005" autocomplete="off"></label>
           <label>Modelo da máquina<input id="machineModel" data-meta="model" type="text" maxlength="90" placeholder="Ex.: CAT 777" autocomplete="off"></label>
           <label>Horímetro (h)<input id="machineHours" data-meta="hours" inputmode="decimal" type="text" maxlength="32" placeholder="Ex.: 8345,3" autocomplete="off"></label>
           <label>Odômetro (km)<input id="machineOdometer" data-meta="odometer" inputmode="decimal" type="text" maxlength="32" placeholder="Se aplicável" autocomplete="off"></label>
         </div>
-        <p class="report-subline" id="reportSubline">Registro técnico de inspeção</p>
+        <p class="report-subline" id="reportSubline">Registro técnico</p>
       </div>
       <div id="reportRows" class="report-rows" aria-label="Blocos do relatório"></div>
       <div class="sheet-end no-print"><span>Arraste os blocos pelo ícone <strong>⋮⋮</strong> para reorganizar</span></div>
