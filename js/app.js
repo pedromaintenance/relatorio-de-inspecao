@@ -1,4 +1,4 @@
-/* GMIN Inspeções v1.1 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.2 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
@@ -18,14 +18,14 @@
   const uid = () => globalThis.crypto?.randomUUID?.() || ('id-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   const machineEmpty = () => ({ tag: '', model: '', hours: '', odometer: '' });
   const newRow = (type = 'empty') => ({
-    id: uid(), type, text: '', items: [], photos: [],
+    id: uid(), type, text: '', rich: null, heading: '', headingStyle: 'section', textStyle: 'body', columns: 2, largePhotos: false, items: [], photos: [],
     command: '', system: '', method: '', assessment: '', severity: '', comment: '', source: ''
   });
   const defaultTitle = () => {
     const d = new Date();
     return `Relatório de Inspeção — ${d.toLocaleDateString('pt-BR')} às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
-  const fresh = () => ({ version: 2, id: uid(), title: defaultTitle(), meta: machineEmpty(),
+  const fresh = () => ({ version: 3, id: uid(), title: defaultTitle(), meta: machineEmpty(), showMachine: true, kicker: 'ENGENHARIA & MANUTENÇÃO DE MINA',
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), rows: [newRow()] });
 
   let state = fresh();
@@ -62,10 +62,18 @@
     textarea.style.height = Math.max(minHeight, textarea.scrollHeight + 2) + 'px';
   }
   function resizeTitle() { resizeArea(titleEl, 42); }
+  const styleChoices = [['body','Texto normal'],['title','Título principal'],['section','Título de seção'],['subheading','Subtítulo'],['caption','Legenda']];
+  const styleOptions = (value, choices = styleChoices) => choices.map(([id,label]) => '<option value="'+id+'"'+(value===id?' selected':'')+'>'+label+'</option>').join('');
+  function richMarkup(row) {
+    return '<div class="rich-tools no-print"><button type="button" data-action="format-bold" aria-label="Negrito"><b>N</b></button><button type="button" data-action="format-italic" aria-label="Itálico"><i>I</i></button><button type="button" data-action="format-underline" aria-label="Sublinhado"><u>S</u></button><label>Estilo <select data-field="text-style">'+styleOptions(row.textStyle||'body')+'</select></label></div><div class="rich-editor text-style-'+(row.textStyle||'body')+'" contenteditable="true" role="textbox" aria-multiline="true" data-field="rich" data-placeholder="Digite o texto...">'+GMINExport.richHTML(row)+'</div>';
+  }
+  function headingMarkup(row) {
+    return '<div class="row-heading-tools"><input type="text" class="row-heading text-style-'+(row.headingStyle||'section')+'" data-field="heading" placeholder="Título da linha (opcional)" aria-label="Título da linha" value="'+esc(row.heading||'')+'"><label class="no-print">Estilo do título <select data-field="heading-style">'+styleOptions(row.headingStyle||'section',styleChoices.filter(x=>x[0]!=='body'&&x[0]!=='caption'))+'</select></label></div>';
+  }
   function photoMarkup(row) {
-    return `<div class="photo-grid">${(row.photos || []).map((photo, i) => `
+    return `<div class="photo-layout no-print"><label>Fotos por linha <select data-field="columns">${[1,2,3,4].map(n=>`<option value="${n}" ${n===(row.columns||2)?'selected':''}>${n}</option>`).join('')}</select></label><label><input type="checkbox" data-field="large-photos" ${row.largePhotos?'checked':''}> Maximizar fotos</label></div><div class="photo-grid ${row.largePhotos?'large-photos':''}" style="--photo-cols:${row.columns||2}">${(row.photos || []).map((photo, i) => `
       <div class="photo-item" data-photo-index="${i}">
-        <img src="${photo.dataUrl}" alt="${esc(photo.caption || 'Evidência fotográfica')}" data-action="photo-view">
+        <textarea rows="2" data-field="photo-note" class="photo-note" placeholder="Texto acima da foto (opcional)" aria-label="Texto da foto ${i+1}">${esc(photo.note||'')}</textarea><img src="${photo.dataUrl}" alt="${esc(photo.caption || 'Evidência fotográfica')}" data-action="photo-view">
         <div class="photo-footer"><input type="text" data-field="photo-caption" class="photo-caption"
           value="${esc(photo.caption)}" placeholder="Legenda da foto" aria-label="Legenda da foto ${i + 1}">
           <button type="button" data-action="photo-remove" class="remove-photo no-print" aria-label="Remover fotografia">✕</button></div>
@@ -112,25 +120,25 @@
       <button type="button" class="choice-button" data-action="choose-text"><span class="choice-icon">▤</span>Adicionar texto</button>
       <button type="button" class="choice-button" data-action="choose-photo"><span class="choice-icon">▧</span>Adicionar foto</button>
       <button type="button" class="choice-button" data-action="choose-list"><span class="choice-icon">☷</span>Adicionar lista</button>
-      <button type="button" class="choice-button" data-action="choose-assessment"><span class="choice-icon">◉</span>Avaliação</button></div>`;
-    if (row.type === 'text') content = `<div class="row-content"><div class="block-heading no-print">Texto</div>
-      <textarea class="text-editor" data-field="text" placeholder="Observações, sintomas, medições ou serviços necessários...">${esc(row.text)}</textarea></div>`;
+      <button type="button" class="choice-button" data-action="choose-assessment"><span class="choice-icon">◉</span>Avaliação</button><button type="button" class="choice-button" data-action="choose-header"><span class="choice-icon">T</span>Cabeçalho</button><button type="button" class="choice-button" data-action="choose-break"><span class="choice-icon">↵</span>Quebra de página</button></div>`;
+    if (row.type === 'text' || row.type === 'header') content = `<div class="row-content"><div class="block-heading no-print">${row.type==='header'?'Cabeçalho':'Texto'}</div>${richMarkup(row)}</div>`;
+    if (row.type === 'page-break') content = '<div class="page-break-marker">↵ Quebra de página · início de nova página</div>';
     if (row.type === 'list') content = `<div class="row-content"><div class="block-heading no-print">Lista</div><div class="list-items">
       ${(row.items || []).map((item, i) => `<div class="list-entry" data-list-index="${i}"><input type="checkbox" data-field="item-done" aria-label="Marcar item como concluído" ${item.done ? 'checked' : ''}>
       <input type="text" data-field="item-text" class="${item.done ? 'checked' : ''}" placeholder="Item da lista" aria-label="Item ${i + 1}" value="${esc(item.text)}">
       <button type="button" class="remove-list-item no-print" data-action="list-remove" aria-label="Excluir item">✕</button></div>`).join('')}
       </div><button type="button" class="add-item no-print" data-action="list-add">＋ Adicionar item</button></div>`;
-    if (row.type === 'photo') content = `<div class="row-content"><div class="block-heading no-print">Fotografias</div>${photoMarkup(row)}</div>`;
+    if (row.type === 'photo') content = `<div class="row-content"><div class="block-heading no-print">Fotografias</div>${richMarkup(row)}${photoMarkup(row)}</div>`;
     if (row.type === 'assessment') { const result = assessmentMarkup(row); content = result.html; statusClass = result.statusClass; }
     return `<div class="row-unit" data-row-id="${esc(row.id)}">
       <button type="button" class="drag-handle no-print" aria-label="Arrastar linha (ou use setas no teclado)" title="Arraste para reordenar" draggable="false">⋮⋮</button>
-      <div class="row-card ${row.type === 'empty' ? 'empty' : ''} ${row.type === 'assessment' ? 'assessment-card' : ''} ${statusClass}">${content}${menu}</div>
+      <div class="row-card ${row.type === 'empty' ? 'empty' : ''} ${row.type === 'assessment' ? 'assessment-card' : ''} ${statusClass}">${row.type!=='empty'&&row.type!=='page-break'?headingMarkup(row):''}${content}${menu}</div>
       <div class="row-add-wrap no-print"><button type="button" class="add-row" data-action="insert" aria-label="Criar linha abaixo" title="Nova linha">+</button></div></div>`;
   }
   function render({ focusId = null } = {}) {
     rowsEl.innerHTML = state.rows.map(rowHTML).join('');
     rowsEl.querySelectorAll('textarea.text-editor,textarea.assessment-command,textarea.assessment-comment').forEach(t => resizeArea(t, t.classList.contains('assessment-command') ? 50 : 76));
-    if (focusId) rowsEl.querySelector(`.row-unit[data-row-id="${CSS.escape(focusId)}"]`)?.querySelector('textarea,input[type=text]')?.focus();
+    if (focusId) rowsEl.querySelector(`.row-unit[data-row-id="${CSS.escape(focusId)}"]`)?.querySelector('[contenteditable],textarea,input[type=text]')?.focus();
   }
   function getRow(element) { const container = element.closest('.row-unit'); return container && state.rows.find(row => row.id === container.dataset.rowId); }
   function closeMenus() {
@@ -139,8 +147,8 @@
   }
   function mutateRow(row, fn, focus = false) { fn(row); changed(); render({ focusId: focus ? row.id : null }); }
   function deleteRow(row) {
-    const populated = row.type === 'assessment' ? Boolean(row.command || row.assessment || row.comment || row.photos?.length) :
-      row.type === 'text' ? Boolean(row.text.trim()) : row.type === 'list' ? row.items.some(item => item.text.trim()) : row.type === 'photo' && row.photos.length;
+    const populated = Boolean(row.heading || row.text) || (row.type === 'assessment' ? Boolean(row.command || row.assessment || row.comment || row.photos?.length) :
+      row.type === 'text' ? Boolean(row.text.trim()) : row.type === 'list' ? row.items.some(item => item.text.trim()) : row.type === 'photo' && row.photos.length);
     if (populated && !confirm('Excluir esta linha e todo o seu conteúdo?')) return;
     state.rows.splice(state.rows.indexOf(row), 1);
     if (!state.rows.length) state.rows.push(newRow());
@@ -151,6 +159,14 @@
     state.rows.splice(state.rows.indexOf(row) + 1, 0, clone);
     changed(); render(); toast('Linha duplicada.');
   }
+  rowsEl.addEventListener('mousedown', event => {
+    if(event.target.closest('[data-action^="format-"]')) event.preventDefault();
+  });
+  rowsEl.addEventListener('paste', event => {
+    if(!event.target.closest('.rich-editor')) return;
+    event.preventDefault(); document.execCommand('insertText',false,event.clipboardData.getData('text/plain'));
+  });
+  rowsEl.addEventListener('drop', event => { if(event.target.closest('.rich-editor')) event.preventDefault(); });
   rowsEl.addEventListener('click', event => {
     const button = event.target.closest('[data-action]'); if (!button) return;
     const action = button.dataset.action, row = getRow(button); if (!row) return;
@@ -159,6 +175,9 @@
       closeMenus(); menu.hidden = wasOpen; return;
     }
     if (action === 'insert') { state.rows.splice(state.rows.indexOf(row) + 1, 0, newRow()); changed(); render(); return; }
+    if (action === 'choose-header') { mutateRow(row,r=>{r.type='header';r.textStyle='title';},true); return; }
+    if (action === 'choose-break') { mutateRow(row,r=>{r.type='page-break';}); return; }
+    if (action.startsWith('format-')) { const editor=button.closest('.row-unit').querySelector('.rich-editor'); if(!editor)return; const sel=window.getSelection(); if(!sel.anchorNode||!editor.contains(sel.anchorNode)||!editor.contains(sel.focusNode)){editor.focus();const range=document.createRange();range.selectNodeContents(editor);range.collapse(false);sel.removeAllRanges();sel.addRange(range);} document.execCommand('styleWithCSS',false,false); document.execCommand(action.slice(7),false,null); row.rich=GMINExport.cleanRich(editor.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); return; }
     if (action === 'choose-text') { mutateRow(row, r => { r.type = 'text'; r.text = ''; }, true); return; }
     if (action === 'choose-list') { mutateRow(row, r => { r.type = 'list'; r.items = [{ id: uid(), text: '', done: false }]; }, true); return; }
     if (action === 'choose-photo') {
@@ -194,6 +213,9 @@
   });
   rowsEl.addEventListener('input', event => {
     const el = event.target, row = getRow(el); if (!row) return;
+    if (el.dataset.field === 'heading') { row.heading=el.value; changed(); }
+    if (el.dataset.field === 'rich') { row.rich=GMINExport.cleanRich(el.innerHTML); row.text=GMINExport.plainRich(row.rich); changed(); }
+    if (el.dataset.field === 'photo-note') { const photo=row.photos[Number(el.closest('[data-photo-index]').dataset.photoIndex)]; if(photo){photo.note=el.value;changed();} }
     if (el.dataset.field === 'text') { row.text = el.value; resizeArea(el); changed(); }
     if (el.dataset.field === 'command') { row.command = el.value; resizeArea(el, 50); changed(); }
     if (el.dataset.field === 'comment') { row.comment = el.value; resizeArea(el, 76); changed(); }
@@ -208,6 +230,10 @@
   });
   rowsEl.addEventListener('change', async event => {
     const el = event.target, row = getRow(el); if (!row) return;
+    if (el.dataset.field === 'heading-style') { mutateRow(row,r=>{r.headingStyle=el.value;});return; }
+    if (el.dataset.field === 'text-style') { mutateRow(row,r=>{r.textStyle=el.value;});return; }
+    if (el.dataset.field === 'columns') { mutateRow(row,r=>{r.columns=Number(el.value);if(r.columns>1)r.largePhotos=false;});return; }
+    if (el.dataset.field === 'large-photos') { mutateRow(row,r=>{r.largePhotos=el.checked;if(el.checked)r.columns=1;});return; }
     if (el.dataset.field === 'item-done') {
       const item = row.items[Number(el.closest('[data-list-index]').dataset.listIndex)];
       if (item) { item.done = el.checked; el.closest('.list-entry').querySelector('[type=text]').classList.toggle('checked', el.checked); changed(); }
@@ -282,6 +308,8 @@
   });
 
   // Cabeçalho da máquina, filtro e biblioteca de checklists.
+  $('#showMachine').addEventListener('change',()=>{state.showMachine=$('#showMachine').checked;document.querySelector('.asset-fields').hidden=!state.showMachine;changed();});
+  $('#reportKicker').addEventListener('input',()=>{state.kicker=$('#reportKicker').value;changed();});
   titleEl.addEventListener('input', () => { state.title = titleEl.value; resizeTitle(); changed(); });
   document.querySelectorAll('[data-meta]').forEach(input => input.addEventListener('input', () => {
     state.meta[input.dataset.meta] = input.value;
@@ -354,19 +382,19 @@
   });
   $('#restoreButton').addEventListener('click', () => { $('#restoreInput').click(); closeMenus(); });
   function sanitizedPhoto(photo) {
-    if (!photo || !/^data:image\/(jpeg|png|webp);base64,/i.test(photo.dataUrl || '')) return null;
-    return { id: uid(), dataUrl: photo.dataUrl, caption: String(photo.caption || '').slice(0, 500),
+    if (!photo || !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/i.test(photo.dataUrl || '')) return null;
+    return { id: uid(), dataUrl: photo.dataUrl, caption: String(photo.caption || '').slice(0, 500), note: String(photo.note || '').slice(0,10000),
       width: Number(photo.width) || 1000, height: Number(photo.height) || 800 };
   }
   function normalizeImported(data) {
-    if (![1, 2].includes(data.version) || !Array.isArray(data.rows) || typeof data.title !== 'string') throw Error('Formato incompatível');
+    if (![1, 2, 3].includes(data.version) || !Array.isArray(data.rows) || typeof data.title !== 'string') throw Error('Formato incompatível');
     return {
-      version: 2, id: uid(), title: data.title.slice(0, 180),
+      version: 3, id: uid(), title: data.title.slice(0, 180), showMachine: data.showMachine !== false, kicker: String(data.kicker ?? 'ENGENHARIA & MANUTENÇÃO DE MINA').slice(0,180),
       meta: Object.fromEntries(Object.keys(machineEmpty()).map(key => [key, String(data.meta?.[key] || '').slice(0, 120)])),
       createdAt: data.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString(),
       rows: data.rows.slice(0, 1200).map(row => ({ ...newRow(),
-        type: ['empty', 'text', 'list', 'photo', 'assessment'].includes(row.type) ? row.type : 'empty',
-        text: String(row.text || '').slice(0, 200000),
+        type: ['empty', 'text', 'list', 'photo', 'assessment','header','page-break'].includes(row.type) ? row.type : 'empty',
+        text: String(row.text || '').slice(0, 200000), rich: typeof row.rich==='string'?GMINExport.cleanRich(row.rich.slice(0,400000)):null, heading: String(row.heading||'').slice(0,500), headingStyle: ['title','section','subheading'].includes(row.headingStyle)?row.headingStyle:'section', textStyle: styleChoices.some(x=>x[0]===row.textStyle)?row.textStyle:'body', columns: [1,2,3,4].includes(Number(row.columns))?Number(row.columns):2, largePhotos: !!row.largePhotos,
         items: Array.isArray(row.items) ? row.items.slice(0, 500).map(item => ({ id: uid(), text: String(item.text || ''), done: !!item.done })) : [],
         photos: Array.isArray(row.photos) ? row.photos.slice(0, 80).map(sanitizedPhoto).filter(Boolean) : [],
         command: String(row.command || '').slice(0, 5000), system: String(row.system || '').slice(0, 100),
@@ -378,7 +406,7 @@
     };
   }
   function hydrateInputs() {
-    titleEl.value = state.title; resizeTitle();
+    titleEl.value = state.title; resizeTitle(); $('#showMachine').checked=state.showMachine!==false;document.querySelector('.asset-fields').hidden=state.showMachine===false;$('#reportKicker').value=state.kicker;
     document.querySelectorAll('[data-meta]').forEach(el => { el.value = state.meta?.[el.dataset.meta] || ''; });
   }
   $('#restoreInput').addEventListener('change', async event => {
@@ -402,7 +430,7 @@
   async function init() {
     try {
       const stored = await GMINStorage.load();
-      if (stored?.rows && [1, 2].includes(stored.version)) {
+      if (stored?.rows && [1, 2, 3].includes(stored.version)) {
         // Preserva dados históricos v1.0; migra formato em memória sem apagar a base antiga antecipadamente.
         state = normalizeImported(stored);
         // Reaproveita IDs de bloco quando restaurando dados locais.

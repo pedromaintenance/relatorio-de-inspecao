@@ -70,3 +70,31 @@
 .photo-camera-button:hover,.photo-camera-button:focus-visible{background:var(--blue-deep);color:#fff;border-color:var(--blue-deep)}
 .photo-gallery-button{background:#f9fcfd}
 @media(max-width:510px){.photo-actions .add-photo{flex:1 1 145px}}
+
+/* Editor geral — estilos de documento GMIN. */
+.asset-fields[hidden]{display:none!important}
+.machine-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#58717e;margin:12px 0}
+.report-kicker{border:0;border-bottom:1px solid #d9e3e8;background:transparent;min-width:0;width:50%;text-align:right;font-family:inherit}
+.choice-group{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rich-tools,.photo-layout,.row-heading-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.rich-tools button,.rich-tools select,.row-heading-tools select,.photo-layout select{border:1px solid #cbd9df;border-radius:5px;background:#fff;color:#005471;padding:7px 10px;font:inherit}
+.rich-tools button{min-width:35px;cursor:pointer}
+.rich-tools label,.photo-layout label,.row-heading-tools label{font-size:12px;color:#58717e;display:flex;gap:6px;align-items:center}
+.rich-editor,.row-heading,.photo-note{border:1px solid #d0dde3;border-radius:6px;background:#fff;min-width:0;padding:10px;outline-color:#005471;overflow-wrap:anywhere}
+.rich-editor{min-height:85px;white-space:pre-wrap;margin-bottom:12px;line-height:1.5}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#8295a0;pointer-events:none;font-weight:400;font-style:normal}
+.row-heading{flex:1 1 190px;width:100%;font-family:inherit}
+.text-style-body{font:14px/1.5 'Segoe UI',Arial,sans-serif;color:#1b313b}
+.text-style-title,.text-style-section{font-family:Montserrat,'Segoe UI',Arial,sans-serif;font-weight:700;text-align:center}
+.text-style-title{font-size:24px;color:#005471}
+.text-style-section{font-size:19px;color:#C3942C}
+.text-style-subheading{font-size:16px;color:#005471;font-weight:700}
+.text-style-caption{font-size:12px;color:#657a84;font-style:italic;text-align:center}
+.photo-grid{grid-template-columns:repeat(var(--photo-cols,2),minmax(0,1fr))}
+.photo-item{min-width:0}
+.photo-item img{height:auto;max-height:260px;object-fit:contain}
+.photo-grid.large-photos .photo-item img{max-height:none;width:100%}
+.photo-note{width:100%;resize:vertical;display:block;font:13px/1.4 'Segoe UI',Arial,sans-serif;margin:0 0 6px}
+.page-break-marker{border-top:2px dashed #C3942C;padding:10px 0;text-align:center;color:#005471;font-size:13px;font-weight:700}
+@media(max-width:600px){.choice-group{grid-template-columns:repeat(2,minmax(0,1fr))}.photo-grid{grid-template-columns:repeat(var(--photo-cols,2),minmax(0,1fr))}.photo-item .photo-footer{flex-wrap:wrap}.photo-caption{min-width:0;width:100%}.row-heading-tools label{width:100%}}
+@media print{.rich-editor,.row-heading,.photo-note,.report-kicker{border:0;background:transparent}.rich-editor{min-height:0;padding:0}.rich-editor:empty,.row-heading:placeholder-shown,.photo-note:placeholder-shown{display:none}.row-unit:has(.page-break-marker){break-inside:auto;break-after:page;page-break-after:always}.page-break-marker{visibility:hidden;height:0;padding:0;border:0}.photo-grid{grid-template-columns:repeat(var(--photo-cols,2),minmax(0,1fr))}}
