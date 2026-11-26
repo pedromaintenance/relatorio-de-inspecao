@@ -44,6 +44,6 @@ const builtins=[
 const key='gmin-document-templates-v1';
 function load(){try{const raw=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(raw)?raw:[];}catch{return [];}}
 function save(items){localStorage.setItem(key,JSON.stringify(items));}
-function templateProject(state){const clone=JSON.parse(JSON.stringify(state));delete clone.id;delete clone.createdAt;delete clone.updatedAt;clone.meta={};clone.document={...control(clone.document),date:''};clone.rows=clone.rows.filter(r=>r.type!=='empty').map(r=>({...r,photos:[],assessment:'',severity:'',comment:r.type==='assessment'?'':r.comment,items:(r.items||[]).map(i=>({...i,done:false}))}));if(!clone.rows.length)clone.rows=[{type:'empty'}];return clone;}
+function templateProject(state){const clone=JSON.parse(JSON.stringify(state));delete clone.id;delete clone.createdAt;delete clone.updatedAt;clone.meta={};clone.document={...control(clone.document),date:'',author:'',reviewer:'',approver:''};clone.rows=clone.rows.filter(r=>r.type!=='empty').map(r=>({...r,photos:[],assessment:'',severity:'',comment:r.type==='assessment'?'':r.comment,items:(r.items||[]).map(i=>({...i,done:false}))}));if(!clone.rows.length)clone.rows=[{type:'empty'}];return clone;}
 g.GMINDocument={fields,defaults,control,table,tableEdit,listMode,prefix,tableMarkup,builtins,load,save,templateProject};
 })(window);
