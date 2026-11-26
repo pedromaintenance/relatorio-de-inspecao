@@ -13,10 +13,10 @@
 <body>
   <header class="app-top no-print">
     <div class="app-top-inner">
-      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Relatórios</i></b><small>Documentos técnicos • Mina TZ</small></span></div>
+      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Relatórios</i></b><small>Documentos técnicos • Mina TZ · v1.3</small></span></div>
       <div class="top-right">
         <span class="save-status" id="saveStatus" role="status" aria-live="polite"><span class="status-dot"></span> Preparando...</span>
-        <button type="button" id="checklistsButton" class="checklists-top-btn" aria-expanded="false" aria-controls="checklistPanel">☷ Checklists</button>
+        <button type="button" id="templatesButton" class="checklists-top-btn" aria-expanded="false" aria-controls="templatePanel">▤ Modelos</button><button type="button" id="checklistsButton" class="checklists-top-btn" aria-expanded="false" aria-controls="checklistPanel">☷ Checklists</button>
         <button type="button" id="projectMenuButton" class="icon-button light" title="Mais opções" aria-label="Mais opções de projeto" aria-expanded="false" aria-controls="projectMenu">⋯</button>
         <div class="project-menu" id="projectMenu" hidden>
           <button type="button" id="backupButton">↓ Exportar projeto editável (.json)</button>
@@ -32,7 +32,7 @@
     <section class="toolbar no-print" aria-label="Exportação no topo">
       <div class="toolbar-heading"><span class="eyebrow">EDITOR DE RELATÓRIO</span><span class="toolbar-desc">Organize o registro de campo como precisar</span></div>
       <div class="export-cluster">
-        <span class="export-label">Exportar</span>
+        <button type="button" class="export-btn" id="previewButton" title="Abrir prévia paginada do navegador em A4">Prévia A4</button><span class="export-label">Exportar</span>
         <button type="button" class="export-btn" data-export="pdf" title="Abrir impressão e salvar em PDF">PDF</button>
         <button type="button" class="export-btn" data-export="html">HTML</button>
         <button type="button" class="export-btn" data-export="xlsx">Excel</button>
@@ -47,6 +47,7 @@
       <div id="checklistChoices" class="checklist-choices"></div>
     </section>
 
+    <section class="checklist-panel no-print" id="templatePanel" hidden aria-label="Modelos de documentos"><div class="checklist-panel-head"><div><b>Biblioteca de modelos</b><p>Crie um documento a partir de uma estrutura reutilizável.</p></div><button type="button" id="closeTemplatePanel" class="icon-button" aria-label="Fechar modelos">✕</button></div><div class="template-actions"><button type="button" id="saveTemplateButton">Salvar relatório como modelo</button><button type="button" id="importTemplateButton">Importar modelo JSON</button></div><div id="templateChoices" class="checklist-choices"></div></section>
     <article class="report-sheet" id="reportSheet">
       <div class="report-head">
         <div class="report-head-top">
@@ -62,7 +63,7 @@
           <label>Horímetro (h)<input id="machineHours" data-meta="hours" inputmode="decimal" type="text" maxlength="32" placeholder="Ex.: 8345,3" autocomplete="off"></label>
           <label>Odômetro (km)<input id="machineOdometer" data-meta="odometer" inputmode="decimal" type="text" maxlength="32" placeholder="Se aplicável" autocomplete="off"></label>
         </div>
-        <p class="report-subline" id="reportSubline">Registro técnico</p>
+        <label class="machine-toggle no-print"><input type="checkbox" data-doc="enabled"> Controle documental</label><div id="docFields" class="doc-fields" hidden><label>Código<input type="text" maxlength="500" data-doc="code" placeholder="Código"></label><label>Revisão<input type="text" maxlength="500" data-doc="revision" placeholder="Revisão"></label><label>Data<input type="text" maxlength="500" data-doc="date" placeholder="Data"></label><label>Área<input type="text" maxlength="500" data-doc="area" placeholder="Área"></label><label>Elaboração<input type="text" maxlength="500" data-doc="author" placeholder="Elaboração"></label><label>Revisão técnica<input type="text" maxlength="500" data-doc="reviewer" placeholder="Revisão técnica"></label><label>Aprovação<input type="text" maxlength="500" data-doc="approver" placeholder="Aprovação"></label><label>Texto do rodapé<input type="text" maxlength="500" data-doc="footer" placeholder="Texto do rodapé"></label><label class="doc-check no-print"><input type="checkbox" data-doc="repeatHeader"> Repetir cabeçalho</label><label class="doc-check no-print"><input type="checkbox" data-doc="pageNumbers"> Numerar páginas</label></div><p class="report-subline" id="reportSubline">Registro técnico</p>
       </div>
       <div id="reportRows" class="report-rows" aria-label="Blocos do relatório"></div>
       <div class="sheet-end no-print"><span>Arraste os blocos pelo ícone <strong>⋮⋮</strong> para reorganizar</span></div>
@@ -80,11 +81,12 @@
     <footer class="app-footer no-print">G MINING VENTURES · MINA TOCANTINZINHO <span>Editor local • sem sincronização automática com SAP</span></footer>
   </main>
 
-  <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+  <input type="file" id="templateInput" accept=".json,application/json" hidden><input type="file" id="restoreInput" accept="application/json,.json" hidden>
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script defer src="js/logo-data.js"></script>
   <script defer src="js/zip.js"></script>
   <script defer src="js/storage.js"></script>
+  <script defer src="js/document.js"></script>
   <script defer src="js/exports.js"></script>
   <script defer src="js/checklists-data.js"></script>
   <script defer src="js/app.js"></script>
