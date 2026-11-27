@@ -1,4 +1,16 @@
-# GMIN Relatórios — Mina TZ (v1.4.0)
+# GMIN Relatórios — Mina TZ (v1.5.0)
+
+## Atualização v1.5.0 — formulários de campo
+
+- **Excel preenchível** e **Imprimir checklist** no editor e diretamente em cada checklist da biblioteca, sem alterar o relatório atual.
+- A4 paisagem, cabeçalho de identificação repetido, opções OK / Não OK / N/A / Não inspecionado, quatro severidades e espaço para registro escrito. Abra a prévia e clique em Imprimir / Salvar PDF.
+- XLSX com listas suspensas, destaque de status e severidade, campos de observação e referência SAP, verificação de preenchimento por item, resumo e filtros. Abas Checklist, Complementos e Orientações.
+- Formulário em branco por padrão; opção de copiar avaliações existentes no editor. Dados de identificação e conteúdo fixo são mantidos. Não exporta imagens. Não modifica o relatório.
+- Texto, cabeçalhos, listas, tabelas, quebras de página e blocos de foto são adaptados para registros escritos; no Excel os complementos são organizados pela ordem original, tabelas são convertidas em campos. Não são reproduzidas as fotos.
+- N/A e Não inspecionado são estados dos novos formulários, não do editor original. Classificação de severidade é exclusiva de Não OK; o Excel sinaliza combinações inconsistentes e falta de justificativa. Sem macros ou sincronização, e sem importação automática da planilha.
+- Cache offline v1.5.0. Teste: `node tests/test_field_forms.cjs`. A compatibilidade visual no Excel e a paginação da impressão precisam ser verificadas em ambiente real.
+
+
 
 ## Atualização v1.4.0 — biblioteca modular de checklists
 

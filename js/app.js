@@ -1,4 +1,4 @@
-/* GMIN Relatórios v1.4 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.5 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
@@ -349,7 +349,7 @@
     const count = checklists.reduce((acc, item) => acc + item.items.length, 0);
     $('#checklistChoices').innerHTML = visible.length ? visible.map(item => `<div class="checklist-choice">
       <div><b>${esc(item.title)}</b><span>${esc(item.category)} · ${esc(item.context)} · Rev. catálogo ${esc(item.revision)} · ${item.items.length} itens</span><span>${esc(item.scope || item.models.join(', '))}</span></div>
-      <button type="button" data-template-id="${esc(item.id)}">＋ Adicionar</button></div>`).join('') :
+      <div class="template-actions"><button type="button" data-template-id="${esc(item.id)}">＋ Adicionar</button><button type="button" data-field-template="${esc(item.id)}" data-format="xlsx" title="Exportar formulário em branco sem alterar relatório">Excel preenchível</button><button type="button" data-field-template="${esc(item.id)}" data-format="print" title="Imprimir formulário em branco sem alterar relatório">Imprimir</button></div></div>`).join('') :
       `<div class="checklist-empty">Nenhum modelo correspondente. Ajuste os filtros ou marque Ignorar modelo da máquina. Biblioteca: ${checklists.length} checklists (${count} itens).</div>`;
   }
   $('#checklistsButton').addEventListener('click', () => {
@@ -364,7 +364,16 @@
   for (const id of ['checklistCategory','checklistContext','checklistAllModels']) {
     $('#' + id).addEventListener('change', renderChecklistChoices);
   }
+  function runFieldForm(project, format, filled=false) {
+    try {
+      if (format==='print') GMINFieldForms.print(project,filled);
+      else {GMINFieldForms.download(project,filled);toast('Planilha preenchível preparada. Nenhuma fotografia incluída.');}
+    } catch(error){console.error(error);toast('Erro no formulário: '+error.message);}
+  }
+  document.querySelectorAll('[data-field-form]').forEach(btn=>btn.addEventListener('click',()=>runFieldForm(state,btn.dataset.fieldForm,$('#fieldFormFilled').checked)));
   $('#checklistChoices').addEventListener('click', event => {
+    const direct=event.target.closest('[data-field-template]');
+    if(direct){const t=checklists.find(x=>x.id===direct.dataset.fieldTemplate);if(t)runFieldForm(GMINFieldForms.fromTemplate(t,state.meta),direct.dataset.format,false);return;}
     const btn = event.target.closest('[data-template-id]'); if (!btn) return;
     const template = checklists.find(item => item.id === btn.dataset.templateId); if (!template) return;
     if (!confirm(`Adicionar ${template.items.length} itens do checklist “${template.title}” ao relatório atual?`)) return;
