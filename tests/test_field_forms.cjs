@@ -12,8 +12,13 @@ s.rows.push({type:'page-break'},{type:'text',text:'Instrução final'});
 const a=s.rows.find(r=>r.type==='assessment');Object.assign(a,{assessment:'not-ok',severity:'critico',comment:'Anomalia <observada>',photos:[{dataUrl:'data:image/png;base64,SECRET'}]});
 const snapshot=JSON.stringify(s),blank=F.prepare(s),filled=F.prepare(s,true);
 assert.equal(blank.count,94);assert.equal(blank.blocks.find(b=>b.kind==='assessment').result,'');assert.equal(filled.blocks.find(b=>b.kind==='assessment').result,'Não OK');
-const html=F.printHTML(s,true);for(const term of ['A4 landscape','Não inspecionado','Muito Crítico','N/A','Anomalia &lt;observada&gt;','Descrição da evidência','Pressão','Instrução final','040-005'])assert(html.includes(term),term);
+const html=F.printHTML(s,true);for(const term of ['A4 portrait','NI (não inspecionado)','MC = Muito Crítico','N/A','Anomalia &lt;observada&gt;','Descrição da evidência','Pressão','Instrução final','040-005'])assert(html.includes(term),term);
 assert(!html.includes('SECRET')&&!html.includes('<img'));assert.equal((html.match(/class="assessment"/g)||[]).length,94);
+assert(html.includes('font:8.5pt/1.13')&&html.includes('.assessment{height:9.4mm}'));
+const assessmentRows=[...html.matchAll(/<tr class="assessment">([\s\S]*?)<\/tr>/g)];
+for(const [,r] of assessmentRows){assert.equal((r.match(/class="square"/g)||[]).length,6);assert.equal((r.match(/class="options"/g)||[]).length,2);assert(!r.includes('>N/A</span>')&&!r.includes('>Não inspecionado</span>'));}
+assert.equal((html.match(/<caption>/g)||[]).length,1);
+assert(html.includes('<thead>')&&html.includes('>NO</span>')&&html.includes('>MC</span>'));
 const files=F.entries(s,true),xml=files.find(f=>f.name.endsWith('sheet1.xml')).data;
 for(const term of ['dataValidations count="2"','Não inspecionado','Muito Crítico','COUNTIF','autoFilter','conditionalFormatting','Anomalia &lt;observada&gt;','pm-pre-lavador-grande-porte'])assert(xml.includes(term),term);
 assert(files.every(f=>!f.data.includes('SECRET')));assert.equal(JSON.stringify(s),snapshot);

@@ -1,4 +1,14 @@
-# GMIN Relatórios — Mina TZ (v1.5.0)
+# GMIN Relatórios — Mina TZ (v1.5.1)
+
+## Atualização v1.5.1 — impressão compacta em A4 retrato
+
+- Ficha física: A4 retrato, margens 8 mm, fonte 8,5 pt, altura-base 9,4 mm (cresce conforme texto), uma linha de observação por avaliação.
+- Apenas OK / NO e M / A / C / MC em uma única linha horizontal de marcação, com legenda no cabeçalho inicial. N/A e NI são registrados por escrito, sem marcar condição; campo vazio sem justificativa permanece pendente.
+- Cabeçalho completo no início e título/TAG e títulos de colunas repetidos nas páginas seguintes. Sem cortar comandos, métodos ou comentários existentes.
+- Protótipo do layout testado em Chromium com 94 itens da planilha Pré-Lavador: quatro páginas; a quantidade real varia conforme navegador, impressora e conteúdo.
+- Use escala 100%, A4 retrato, desative cabeçalhos e rodapés do navegador. Excel preenchível inalterado. Cache PWA v1.5.1.
+
+
 
 ## Atualização v1.5.0 — formulários de campo
 
