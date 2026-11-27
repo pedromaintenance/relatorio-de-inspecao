@@ -1,4 +1,28 @@
-# GMIN Inspeções — Mina TZ (v1.1.2)
+# GMIN Relatórios — Mina TZ (v1.5.0)
+
+## Atualização v1.5.0 — formulários de campo
+
+- **Excel preenchível** e **Imprimir checklist** no editor e diretamente em cada checklist da biblioteca, sem alterar o relatório atual.
+- A4 paisagem, cabeçalho de identificação repetido, opções OK / Não OK / N/A / Não inspecionado, quatro severidades e espaço para registro escrito. Abra a prévia e clique em Imprimir / Salvar PDF.
+- XLSX com listas suspensas, destaque de status e severidade, campos de observação e referência SAP, verificação de preenchimento por item, resumo e filtros. Abas Checklist, Complementos e Orientações.
+- Formulário em branco por padrão; opção de copiar avaliações existentes no editor. Dados de identificação e conteúdo fixo são mantidos. Não exporta imagens. Não modifica o relatório.
+- Texto, cabeçalhos, listas, tabelas, quebras de página e blocos de foto são adaptados para registros escritos; no Excel os complementos são organizados pela ordem original, tabelas são convertidas em campos. Não são reproduzidas as fotos.
+- N/A e Não inspecionado são estados dos novos formulários, não do editor original. Classificação de severidade é exclusiva de Não OK; o Excel sinaliza combinações inconsistentes e falta de justificativa. Sem macros ou sincronização, e sem importação automática da planilha.
+- Cache offline v1.5.0. Teste: `node tests/test_field_forms.cjs`. A compatibilidade visual no Excel e a paginação da impressão precisam ser verificadas em ambiente real.
+
+
+
+## Atualização v1.4.0 — biblioteca modular de checklists
+
+- 12 checklists, 576 itens (482 existentes + 94 do PM Pré-Lavador).
+- Cada checklist tem um arquivo legível, ID estável, categoria, contexto, revisão de catálogo, fonte e IDs dos itens.
+- Filtros de categoria/contexto, busca textual e opção de ignorar o modelo automático.
+- PM Pré-Lavador: sete seções na ordem da planilha; inclui cabeçalho editável com orientações, data, série e responsável. TAG e horímetro no cabeçalho existente.
+- Revisões do catálogo ficam gravadas no backup JSON nos novos itens, sem alterar o esquema dos relatórios anteriores.
+- Cache PWA v1.4.0 atualizado; os módulos funcionam offline e também em file://.
+- As notas de v1.1.2 abaixo são históricas. Consulte [guia de manutenção da biblioteca](js/checklists/README.md) para incluir ou revisar modelos. A versão do catálogo não equivale à aprovação técnica do documento.
+
+---
 
 Editor de relatórios técnico **offline-first**, feito em HTML, CSS e JavaScript sem bibliotecas externas. Mantém compatibilidade com relatórios da versão 1.0. Aplicativo estático adequado para GitHub Pages ou hospedagem corporativa HTTPS.
 

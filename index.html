@@ -13,7 +13,7 @@
 <body>
   <header class="app-top no-print">
     <div class="app-top-inner">
-      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Relatórios</i></b><small>Documentos técnicos • Mina TZ · v1.3</small></span></div>
+      <div class="app-brand"><span class="brand-mark">G</span><span class="brand-copy"><b>GMIN <i>Relatórios</i></b><small>Documentos técnicos • Mina TZ · v1.5</small></span></div>
       <div class="top-right">
         <span class="save-status" id="saveStatus" role="status" aria-live="polite"><span class="status-dot"></span> Preparando...</span>
         <button type="button" id="templatesButton" class="checklists-top-btn" aria-expanded="false" aria-controls="templatePanel">▤ Modelos</button><button type="button" id="checklistsButton" class="checklists-top-btn" aria-expanded="false" aria-controls="checklistPanel">☷ Checklists</button>
@@ -40,10 +40,22 @@
       </div>
     </section>
 
+    <section class="field-form-bar no-print" aria-label="Formulários de campo">
+      <div><b>Formulários de campo</b><small>Sem fotografias · preencher no Excel ou à mão</small></div>
+      <label><input type="checkbox" id="fieldFormFilled"> Levar avaliações já preenchidas</label>
+      <div class="export-cluster"><button type="button" class="export-btn" data-field-form="xlsx">Excel preenchível</button><button type="button" class="export-btn primary" data-field-form="print">Imprimir checklist</button></div>
+    </section>
     <section class="checklist-panel no-print" id="checklistPanel" hidden aria-label="Biblioteca de checklists">
       <div class="checklist-panel-head"><div><b>Biblioteca de checklists</b><p>Modelos locais disponíveis mesmo sem internet</p></div><button type="button" id="closeChecklistPanel" class="icon-button" aria-label="Fechar checklists">✕</button></div>
-      <label for="checklistFilter">Filtrar por modelo ou frota</label>
-      <input id="checklistFilter" type="search" placeholder="Ex.: 777, 6030, D9, DR410i..." autocomplete="off">
+      <div class="checklist-filters">
+        <label for="checklistCategory">Categoria</label>
+        <select id="checklistCategory"><option value="">Todas</option><option value="PM">PM</option><option value="Inspeção">Inspeção</option></select>
+        <label for="checklistContext">Contexto</label>
+        <select id="checklistContext"><option value="">Todos</option></select>
+        <label><input type="checkbox" id="checklistAllModels"> Ignorar modelo da máquina</label>
+      </div>
+      <label for="checklistFilter">Pesquisar checklist, modelo ou contexto</label>
+      <input id="checklistFilter" type="search" placeholder="Ex.: Pré-Lavador, 777, 6030, D9..." autocomplete="off">
       <div id="checklistChoices" class="checklist-choices"></div>
     </section>
 
@@ -88,7 +100,20 @@
   <script defer src="js/storage.js"></script>
   <script defer src="js/document.js"></script>
   <script defer src="js/exports.js"></script>
+  <script defer src="js/field-forms.js"></script>
   <script defer src="js/checklists-data.js"></script>
+  <script defer src="js/checklists/implementos/cacamba.js"></script>
+  <script defer src="js/checklists/inspecao-geral/cat-6030.js"></script>
+  <script defer src="js/checklists/inspecao-geral/perfuratrizes.js"></script>
+  <script defer src="js/checklists/inspecao-geral/caminhao-articulado.js"></script>
+  <script defer src="js/checklists/inspecao-geral/caminhao-fora-de-estrada.js"></script>
+  <script defer src="js/checklists/inspecao-geral/carregadeira.js"></script>
+  <script defer src="js/checklists/inspecao-geral/escavadeira-hidraulica.js"></script>
+  <script defer src="js/checklists/inspecao-geral/motoniveladora.js"></script>
+  <script defer src="js/checklists/inspecao-geral/rolo-compactador.js"></script>
+  <script defer src="js/checklists/inspecao-geral/trator-de-esteiras.js"></script>
+  <script defer src="js/checklists/inspecao-geral/trommel.js"></script>
+  <script defer src="js/checklists/pm/pre-lavador/grande-porte.js"></script>
   <script defer src="js/app.js"></script>
 </body>
 </html>

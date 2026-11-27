@@ -1,4 +1,4 @@
-/* GMIN Relatórios v1.3 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.5 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
@@ -323,20 +323,34 @@
     changed();
   }));
   function normalize(text) { return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function updateChecklistContexts() {
+    const category = $('#checklistCategory').value;
+    const select = $('#checklistContext');
+    const previous = select.value;
+    const contexts = [...new Set(checklists.filter(t => !category || t.category === category).map(t => t.context))].sort();
+    select.replaceChildren(new Option('Todos', ''), ...contexts.map(c => new Option(c, c)));
+    if (contexts.includes(previous)) select.value = previous;
+  }
   function renderChecklistChoices() {
+    updateChecklistContexts();
     const manualQuery = normalize($('#checklistFilter').value);
     const machineQuery = normalize(state.meta.model);
-    const matches = (item, query) => [item.title, ...item.models].some(term => normalize(term).includes(query) || query.includes(normalize(term)));
-    // Checklists em destaque ficam no topo, mesmo quando o modelo da máquina está preenchido.
-    // Uma pesquisa digitada manualmente continua filtrando todos os resultados.
-    const visible = checklists.filter(item => manualQuery
-      ? matches(item, manualQuery)
-      : item.featured || !machineQuery || matches(item, machineQuery));
+    const category = $('#checklistCategory').value;
+    const context = $('#checklistContext').value;
+    const allModels = $('#checklistAllModels').checked;
+    const matches = (terms, query) => terms.some(term => {
+      const n = normalize(term); return n && (n.includes(query) || query.includes(n));
+    });
+    const visible = checklists.filter(item => {
+      if (category && item.category !== category || context && item.context !== context) return false;
+      if (manualQuery) return matches([item.title, item.category, item.context, ...item.models], manualQuery);
+      return allModels || item.featured || item.showForAnyModel || !machineQuery || matches([item.title, ...item.models], machineQuery);
+    });
     const count = checklists.reduce((acc, item) => acc + item.items.length, 0);
     $('#checklistChoices').innerHTML = visible.length ? visible.map(item => `<div class="checklist-choice">
-      <div><b>${esc(item.title)}</b><span>${item.items.length} itens · ${esc(item.models.join(', '))}</span></div>
-      <button type="button" data-template-id="${esc(item.id)}">＋ Adicionar</button></div>`).join('') :
-      `<div class="checklist-empty">Nenhum modelo correspondente. Limpe o filtro para consultar as ${checklists.length} checklists (${count} itens).</div>`;
+      <div><b>${esc(item.title)}</b><span>${esc(item.category)} · ${esc(item.context)} · Rev. catálogo ${esc(item.revision)} · ${item.items.length} itens</span><span>${esc(item.scope || item.models.join(', '))}</span></div>
+      <div class="template-actions"><button type="button" data-template-id="${esc(item.id)}">＋ Adicionar</button><button type="button" data-field-template="${esc(item.id)}" data-format="xlsx" title="Exportar formulário em branco sem alterar relatório">Excel preenchível</button><button type="button" data-field-template="${esc(item.id)}" data-format="print" title="Imprimir formulário em branco sem alterar relatório">Imprimir</button></div></div>`).join('') :
+      `<div class="checklist-empty">Nenhum modelo correspondente. Ajuste os filtros ou marque Ignorar modelo da máquina. Biblioteca: ${checklists.length} checklists (${count} itens).</div>`;
   }
   $('#checklistsButton').addEventListener('click', () => {
     const panel = $('#checklistPanel'); panel.hidden = !panel.hidden;
@@ -347,17 +361,40 @@
     $('#checklistPanel').hidden = true; $('#checklistsButton').setAttribute('aria-expanded', 'false');
   });
   $('#checklistFilter').addEventListener('input', renderChecklistChoices);
+  for (const id of ['checklistCategory','checklistContext','checklistAllModels']) {
+    $('#' + id).addEventListener('change', renderChecklistChoices);
+  }
+  function runFieldForm(project, format, filled=false) {
+    try {
+      if (format==='print') GMINFieldForms.print(project,filled);
+      else {GMINFieldForms.download(project,filled);toast('Planilha preenchível preparada. Nenhuma fotografia incluída.');}
+    } catch(error){console.error(error);toast('Erro no formulário: '+error.message);}
+  }
+  document.querySelectorAll('[data-field-form]').forEach(btn=>btn.addEventListener('click',()=>runFieldForm(state,btn.dataset.fieldForm,$('#fieldFormFilled').checked)));
   $('#checklistChoices').addEventListener('click', event => {
+    const direct=event.target.closest('[data-field-template]');
+    if(direct){const t=checklists.find(x=>x.id===direct.dataset.fieldTemplate);if(t)runFieldForm(GMINFieldForms.fromTemplate(t,state.meta),direct.dataset.format,false);return;}
     const btn = event.target.closest('[data-template-id]'); if (!btn) return;
     const template = checklists.find(item => item.id === btn.dataset.templateId); if (!template) return;
     if (!confirm(`Adicionar ${template.items.length} itens do checklist “${template.title}” ao relatório atual?`)) return;
     const inserted = template.items.map(item => ({ ...newRow('assessment'), command: item.command, system: item.system,
-      method: item.method || '', source: template.title }));
+      method: item.method || '', source: template.title,
+      checklistId: template.id, checklistRevision: template.revision, checklistItemId: item.id }));
+    if (template.activity) {
+      const header = { ...newRow('text'), heading: template.title,
+        text: [template.activity, template.safety, template.nonconformity,
+          'Revisão do catálogo: ' + template.revision,
+          'Data: __________    Série do equipamento: __________    Responsável: __________',
+          'TAG e horímetro: preencher no cabeçalho da máquina.',
+          'Confirmar aplicabilidade de cada item ao equipamento; não marcar OK em item não aplicável.'].join('\n'),
+        checklistId: template.id, checklistRevision: template.revision };
+      inserted.unshift(header);
+    }
     if (state.rows.length === 1 && state.rows[0].type === 'empty') state.rows = inserted;
     else state.rows.push(...inserted);
     changed(); render();
     $('#checklistPanel').hidden = true; $('#checklistsButton').setAttribute('aria-expanded', 'false');
-    toast(`${inserted.length} itens adicionados. Tudo disponível offline.`);
+    toast(`${template.items.length} itens adicionados. Tudo disponível offline.`);
   });
 
   window.addEventListener('resize', () => {
@@ -408,7 +445,8 @@
         method: String(row.method || '').slice(0, 100),
         assessment: ['ok', 'not-ok'].includes(row.assessment) ? row.assessment : '',
         severity: severityOptions.some(s => s.value === row.severity) ? row.severity : '',
-        comment: String(row.comment || '').slice(0, 200000), source: String(row.source || '').slice(0, 100)
+        comment: String(row.comment || '').slice(0, 200000), source: String(row.source || '').slice(0, 100),
+        checklistId: String(row.checklistId || '').slice(0, 100), checklistRevision: String(row.checklistRevision || '').slice(0, 40), checklistItemId: String(row.checklistItemId || '').slice(0, 100)
       }))
     };
   }
