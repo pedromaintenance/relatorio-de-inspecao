@@ -12,7 +12,7 @@ function prepare(state, filled=false){
  const m=state.meta||{},d=state.document||{};
  const fields=[['Data da inspeção',''],['Responsável',''],['Turno',''],['OS / referência SAP','']];
  if(state.showMachine!==false)fields.unshift(['TAG',m.tag||''],['Modelo',m.model||''],['Nº de série',''],['Horímetro (h)',m.hours||''],['Odômetro (km)',m.odometer||'']);
- const documentFields=d.enabled?[['Código',d.code],['Revisão documental',d.revision],['Data do documento',d.date],['Área',d.area],['Elaboração',d.author],['Revisão técnica',d.reviewer],['Aprovação',d.approver]].filter(x=>x[1]):[];
+ const documentFields=d.enabled?[['Código',d.code],['Revisão documental',d.revision],['Data do documento',d.date],['Área',d.area],['Elaboração',d.author],['Revisão técnica',d.reviewer],['Aprovação',d.approver]].map(([k,v])=>[k,v||'']):[];
  const blocks=[];let index=0,seq=0;
  for(const r of state.rows||[]){
   if(r.type==='empty')continue;
@@ -42,7 +42,7 @@ const lines=(n=2)=>'<div class="write-lines">'+Array(n).fill('<div></div>').join
 const safeText=t=>'<div class="preserve">'+esc(t)+'</div>';
 function printHTML(state,filled=false){
  const p=prepare(state,filled);
- const head=()=>'<thead><tr><td colspan="5" class="form-head"><div class="brand"><div><b>G MINING VENTURES · MINA TZ</b><small>'+esc(p.kicker)+'</small></div><b>CHECKLIST DE CAMPO</b></div><h1>'+esc(p.title)+'</h1><div class="fields">'+p.fields.map(([k,v])=>'<div><b>'+esc(k)+'</b><span>'+esc(v||'')+'</span></div>').join('')+'</div>'+(p.documentFields.length?'<div class="doc-meta">'+p.documentFields.map(([k,v])=>esc(k)+': '+esc(v)).join(' · ')+'</div>':'')+'<div class="rules">'+esc(instructions)+'</div></td></tr><tr class="column-head"><th>Item</th><th>Ponto de inspeção / método</th><th>Condição</th><th>Severidade</th><th>Condição observada / ação / referência SAP</th></tr></thead>';
+ const head=()=>'<thead><tr><td colspan="5" class="form-head"><div class="brand"><div><b>G MINING VENTURES · MINA TZ</b><small>'+esc(p.kicker)+'</small></div><b>CHECKLIST DE CAMPO</b></div><h1>'+esc(p.title)+'</h1><div class="fields">'+p.fields.map(([k,v])=>'<div><b>'+esc(k)+'</b><span>'+esc(v||'')+'</span></div>').join('')+'</div>'+(p.documentFields.length?'<div class="doc-meta">'+p.documentFields.map(([k,v])=>esc(k)+': '+esc(v||'________')).join(' · ')+'</div>':'')+(p.revisions.length?'<div class="doc-meta">Catálogo: '+p.revisions.map(esc).join(' · ')+'</div>':'')+'<div class="rules">'+esc(instructions)+'</div></td></tr><tr class="column-head"><th>Item</th><th>Ponto de inspeção / método</th><th>Condição</th><th>Severidade</th><th>Condição observada / ação / referência SAP</th></tr></thead>';
  const table=body=>'<table class="form"><colgroup><col style="width:5%"><col style="width:32%"><col style="width:14%"><col style="width:15%"><col style="width:34%"></colgroup>'+head()+'<tbody>'+body+'</tbody></table>';
  let sections=[],body='',lastGroup='';
  const full=(html,cls='')=>'<tr class="'+cls+'"><td colspan="5">'+html+'</td></tr>';
@@ -102,21 +102,25 @@ function entries(state,filled=false){
  for(let i=0;i<p.fields.length;i+=3){
   const a=p.fields.slice(i,i+3);const vals=[],st=[];
   for(const [k,v] of a){vals.push(k,v,'');st.push(3,4,4);}
-  const nr=line(vals,st,30);for(let j=0;j<a.length;j++)merges.push(col(2+j*3)+nr+':'+col(3+j*3)+nr);
+  const nr=line(vals,st,38);for(let j=0;j<a.length;j++)merges.push(col(2+j*3)+nr+':'+col(3+j*3)+nr);
  }
- for(const [k,v] of p.documentFields){const nr=line([k,v],[3,5],28);merges.push('B'+nr+':J'+nr);}
+ for(const [k,v] of p.documentFields){const nr=line([k,v],[3,v?5:4],28);merges.push('B'+nr+':J'+nr);}
  const stats=line(['Resumo',p.count,'avaliações'],[3,5,5],24);
+ const coverage=line(['Cobertura'],[3],27);
  const header=line(['Item','Ordem / seção','Ponto de inspeção','Método','Condição','Severidade','Observação / justificativa','Ação / referência SAP','Verificação','Origem / revisão / ID'],Array(10).fill(1),32);
  const first=header+1;
  for(const b of p.blocks.filter(x=>x.kind==='assessment')){
   const nr=r+1;
-  const formula='IF(E'+nr+'="","Pendente",IF(E'+nr+'="Não OK",IF(OR(F'+nr+'="",LEN(TRIM(G'+nr+'))=0),"Completar severidade / observação","Registrado"),IF(F'+nr+'<>"","Limpar severidade",IF(AND(OR(E'+nr+'="N/A",E'+nr+'="Não inspecionado"),LEN(TRIM(G'+nr+'))=0),"Justificar","Registrado"))))';
-  const h=Math.max(42,Math.min(180,Math.ceil((b.command||'').length/55)*17+16,Math.ceil((b.comment||'').length/55)*17+16));
+  const E='E'+nr,F='F'+nr,G='G'+nr;
+  const valid=(ref,values)=>'OR('+values.map(v=>ref+'="'+v+'"').join(',')+')';
+  const formula='IF('+E+'="","Pendente",IF(NOT('+valid(E,statuses)+'),"Condição inválida",IF('+E+'="Não OK",IF(OR(NOT('+valid(F,severity)+'),LEN(TRIM('+G+'))=0),"Completar severidade / observação","Registrado"),IF('+F+'<>"","Limpar severidade",IF(AND(OR('+E+'="N/A",'+E+'="Não inspecionado"),LEN(TRIM('+G+'))=0),"Justificar","Registrado")))))';
+  const h=Math.max(42,Math.min(180,Math.max(Math.ceil(([b.heading,b.command].filter(Boolean).join(' ').length)/55)*17+16,Math.ceil((b.comment||'').length/55)*17+16)));
   line([b.n,b.order+' · '+[b.source,b.system].filter(Boolean).join(' · '),[b.heading,b.command].filter(Boolean).join('\n'),b.method,b.result,b.severity,b.comment,'',{formula},b.ref],[5,5,5,5,4,4,4,4,5,5],h);
  }
  const last=r;
  if(last>=first){
-  main[stats-1]=row(['Resumo',p.count,'avaliações','OK',{formula:'COUNTIF(E'+first+':E'+last+',"OK")'},'Não OK',{formula:'COUNTIF(E'+first+':E'+last+',"Não OK")'},'Pendências',{formula:'COUNTIF(I'+first+':I'+last+',"<>Registrado")'}],stats,[3,5,5,3,5,3,5,3,5],27);
+  main[stats-1]=row(['Resumo',p.count,'avaliações','OK',{formula:'COUNTIF(E'+first+':E'+last+',"OK")'},'Não OK',{formula:'COUNTIF(E'+first+':E'+last+',"Não OK")'},'Registro incompleto',{formula:'COUNTIF(I'+first+':I'+last+',"<>Registrado")'}],stats,[3,5,5,3,5,3,5,3,5],32);
+  main[coverage-1]=row(['Cobertura','N/A',{formula:'COUNTIF(E'+first+':E'+last+',"N/A")'},'Não inspecionado',{formula:'COUNTIF(E'+first+':E'+last+',"Não inspecionado")'},'Sem resposta',{formula:'COUNTBLANK(E'+first+':E'+last+')'}],coverage,[3,3,5,3,5,3,5],32);
  }
  const lastAssessment=last;
  line(['Encerramento / observações gerais'],[3],25);merges.push('A'+r+':J'+r);
@@ -127,13 +131,13 @@ function entries(state,filled=false){
   dv='<dataValidations count="2">'+rule('E'+first+':E'+lastAssessment,statuses,'Condição inválida','Selecione uma opção da lista.')+rule('F'+first+':F'+lastAssessment,severity,'Severidade inválida','Selecione uma opção da lista; use somente em Não OK.')+'</dataValidations>';
   cond=cf('E'+first+':E'+lastAssessment,'$E'+first+'="OK"',0,1)+cf('E'+first+':E'+lastAssessment,'$E'+first+'="Não OK"',1,2)+severity.map((s,i)=>cf('F'+first+':F'+lastAssessment,'AND($E'+first+'="Não OK",$F'+first+'="'+s+'")',i+2,i+3)).join('');
  }
- let er=0;const e=(v,s,h=34)=>extra.push(row(v,++er,s,h));
+ let er=0;const listRows=[];const e=(v,s,h=34)=>{extra.push(row(v,++er,s,h));return er;};
  e(['COMPLEMENTOS DO CHECKLIST'],[2]);e(['Ordem original','Tipo / seção','Conteúdo / campo','Registro escrito / valor'],[1,1,1,1]);
  for(const b of p.blocks){
   if(b.kind==='assessment')continue;
   if(b.kind==='text')e([b.order,b.heading||'Texto',b.text,''],[5,5,5,4],Math.max(40,Math.min(180,Math.ceil((b.text||'').length/80)*17+18)));
   if(b.kind==='photo')e([b.order,b.heading||'Evidências escritas',[b.text,...b.notes].filter(Boolean).join('\n'),''],[5,5,5,4],70);
-  if(b.kind==='list')for(const it of b.items)e([b.order,b.heading||'Lista',it.text,b.mode==='check'&&filled&&it.done?'Marcado':''],[5,5,5,4]);
+  if(b.kind==='list')for(const it of b.items){const nr=e([b.order,b.heading||'Lista',it.text,b.mode==='check'&&filled&&it.done?'Marcado':''],[5,5,5,4]);if(b.mode==='check')listRows.push('D'+nr);}
   if(b.kind==='table'){
    const heads=b.table.header?b.table.rows[0]||[]:[];
    b.table.rows.forEach((cells,i)=>{
@@ -157,15 +161,15 @@ function entries(state,filled=false){
  {name:'xl/workbook.xml',data:decl+'<workbook xmlns="'+NS+'" xmlns:r="'+REL+'"><sheets>'+names.map((n,j)=>'<sheet name="'+n+'" sheetId="'+(j+1)+'" r:id="rId'+(j+1)+'"/>').join('')+'</sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">Checklist!$1:$'+header+'</definedName></definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>'},
  {name:'xl/_rels/workbook.xml.rels',data:decl+'<Relationships xmlns="'+PKG+'">'+names.map((n,j)=>'<Relationship Id="rId'+(j+1)+'" Type="'+REL+'/worksheet" Target="worksheets/sheet'+(j+1)+'.xml"/>').join('')+'<Relationship Id="rId4" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>'},
  {name:'xl/styles.xml',data:styles},
- {name:'xl/worksheets/sheet1.xml',data:sheet({data:main,widths:[8,30,65,21,22,19,62,38,33,42],freeze:header,merges,filter:lastAssessment>=first?'A'+header+':J'+lastAssessment:'',validation:dv,conditional:cond,print:true})},
- {name:'xl/worksheets/sheet2.xml',data:sheet({data:extra,widths:[13,33,95,65],freeze:2,merges:['A1:D1']})},
+ {name:'xl/worksheets/sheet1.xml',data:sheet({data:main,widths:[13,30,65,21,22,19,62,38,33,42],freeze:header,merges,filter:lastAssessment>=first?'A'+header+':J'+lastAssessment:'',validation:dv,conditional:cond,print:true})},
+ {name:'xl/worksheets/sheet2.xml',data:sheet({data:extra,widths:[13,33,95,65],freeze:2,merges:['A1:D1'],validation:listRows.length?'<dataValidations count="1">'+rule(listRows.join(' '),['Marcado','Pendente','N/A'],'Registro inválido','Selecione uma opção da lista.')+'</dataValidations>':''})},
  {name:'xl/worksheets/sheet3.xml',data:sheet({data:info,widths:[28,120]})}
  ];
 }
 function makeXLSX(state,filled=false){return g.GMINZip.pack(entries(state,filled));}
 function download(state,filled=false){g.GMINExport.download(makeXLSX(state,filled),g.GMINExport.basename(state.title)+'_checklist_preenchivel.xlsx');}
 function fromTemplate(t,meta={}){
- const rows=[];if(t.activity||t.safety||t.nonconformity)rows.push({type:'text',heading:t.title,text:[t.activity,t.safety,t.nonconformity].filter(Boolean).join('\n')});
+ const rows=[];if(t.activity||t.safety||t.nonconformity)rows.push({type:'text',heading:t.title,text:[t.activity,t.safety,t.nonconformity,t.scope].filter(Boolean).join('\n')});
  rows.push(...t.items.map(it=>({type:'assessment',source:t.title,system:it.system,command:it.command,method:it.method,checklistId:t.id,checklistRevision:t.revision,checklistItemId:it.id})));
  return {title:t.title,meta:{...meta},showMachine:true,rows};
 }
