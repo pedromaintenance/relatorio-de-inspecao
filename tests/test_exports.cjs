@@ -3,7 +3,13 @@ const vm = require('vm'), fs = require('fs'), path = require('path'), assert = r
 const root = path.resolve(__dirname, '..');
 const ctx = { TextEncoder, Blob, Uint8Array, DataView, Date, atob, URL, setTimeout, console };
 ctx.window = ctx; vm.createContext(ctx);
-for (const file of ['js/logo-data.js', 'js/zip.js', 'js/exports.js', 'js/checklists-data.js']) {
+const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const modules = [...indexSource.matchAll(/<script defer src="(js\/checklists\/[^"]+)"><\/script>/g)].map(m=>m[1]);
+const swSource = fs.readFileSync(path.join(root, 'service-worker.js'), 'utf8');
+assert.strictEqual(modules.length, 12);
+assert.strictEqual(new Set(modules).size, modules.length);
+for (const file of modules) assert(swSource.includes("'./" + file + "'"), 'Fora do cache offline: ' + file);
+for (const file of ['js/logo-data.js', 'js/zip.js', 'js/exports.js', 'js/checklists-data.js', ...modules]) {
   vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), ctx, { filename: file });
 }
 
@@ -20,8 +26,20 @@ assert(appSource.includes("if (action === 'photo-gallery')") && appSource.includ
 assert(appSource.includes("if (el.classList.contains('photo-input'))"), 'Pipeline de processamento de imagem não compartilhado');
 
 const templates = ctx.GMIN_CHECKLISTS;
-assert.strictEqual(templates.length, 11);
-assert.strictEqual(templates.reduce((sum, t) => sum + t.items.length, 0), 482);
+assert.strictEqual(templates.length, 12);
+assert.strictEqual(templates.reduce((sum, t) => sum + t.items.length, 0), 576);
+const pm = templates.find(t => t.id === 'pm-pre-lavador-grande-porte');
+assert(pm && pm.category === 'PM' && pm.context === 'Pré-Lavador');
+assert.strictEqual(pm.items.length, 94);
+assert.strictEqual(new Set(pm.items.map(i=>i.system)).size, 7);
+assert.strictEqual(new Set(pm.items.map(i=>i.id)).size, 94);
+assert.strictEqual(pm.items[0].id, 'r16');
+assert.strictEqual(pm.items.at(-1).id, 'r115');
+assert(pm.items.find(i=>i.id==='r101').command.includes('2 a 4 minutos'));
+assert(pm.safety && pm.nonconformity && pm.activity);
+assert.strictEqual(templates.filter(t=>t.id!==pm.id).reduce((sum,t)=>sum+t.items.length,0), 482);
+assert(appSource.includes('checklistCategory') && appSource.includes('checklistContext'));
+assert(appSource.includes('checklistRevision: template.revision') && appSource.includes('row.checklistRevision'));
 assert.strictEqual(templates[0].id, 'check-11');
 assert.strictEqual(templates[0].title, 'Inspeção de Caçamba');
 assert.strictEqual(templates[0].featured, true);
