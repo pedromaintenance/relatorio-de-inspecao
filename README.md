@@ -1,4 +1,10 @@
-# GMIN Relatórios — Mina TZ (v1.5.1)
+# GMIN Relatórios — Mina TZ (v1.5.2)
+
+## Atualização v1.5.2 — cabeçalho corporativo da ficha física
+
+- Logotipo oficial G Mining Ventures — Mina TZ (26 mm de largura), incorporado como PNG local em base64 para impressão offline; assinatura institucional editável à direita com linha fina, na primeira página.
+- Mantidos A4 retrato, fonte 8,5 pt, altura-base 9,4 mm, marcação horizontal e cabeçalhos compactos nas páginas seguintes. O logotipo é a única imagem do formulário; fotografias de inspeção continuam excluídas. XLSX preenchível inalterado. Cache v1.5.2.
+
 
 ## Atualização v1.5.1 — impressão compacta em A4 retrato
 

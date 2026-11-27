@@ -1,4 +1,4 @@
-/* GMIN Relatórios v1.5.1 — editor offline com avaliação condicional e biblioteca local. */
+/* GMIN Relatórios v1.5.2 — editor offline com avaliação condicional e biblioteca local. */
 (function () {
   'use strict';
 
