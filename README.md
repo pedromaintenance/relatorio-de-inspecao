@@ -1,4 +1,9 @@
-# GMIN Relatórios — Mina TZ (v1.5.3)
+# GMIN Relatórios — Mina TZ (v1.5.4)
+
+## Atualização v1.5.4 — identidade visual do aplicativo
+
+- Substituído o símbolo genérico G do cabeçalho pelo logotipo oficial G Mining Ventures — Mina TZ já utilizado nos relatórios, sobre fundo branco para preservar contraste. Marca sem distorção, layout responsivo, recurso local já incluído no cache offline. Nenhuma alteração nos formulários ou exportadores. Cache PWA v1.5.4.
+
 
 ## Atualização v1.5.3 — refinamento da ficha física
 
