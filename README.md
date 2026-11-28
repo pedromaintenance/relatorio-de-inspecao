@@ -1,4 +1,11 @@
-# GMIN Relatórios — Mina TZ (v1.5.2)
+# GMIN Relatórios — Mina TZ (v1.5.3)
+
+## Atualização v1.5.3 — refinamento da ficha física
+
+- Coluna de observações das avaliações sem linha interna, deixando a célula livre para escrita manual. Comentários existentes são mantidos quando solicitados.
+- Coluna de numeração exibe somente o número sequencial, sem o ID técnico da linha. IDs mantidos no catálogo, no projeto e no Excel preenchível.
+- Cabeçalho corporativo, formato A4 retrato, altura-base de 9,4 mm e demais características preservados. Cache PWA v1.5.3.
+
 
 ## Atualização v1.5.2 — cabeçalho corporativo da ficha física
 

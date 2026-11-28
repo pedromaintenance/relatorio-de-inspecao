@@ -17,6 +17,9 @@ assert(!html.includes('SECRET'));assert.equal((html.match(/<img\b/g)||[]).length
 assert(html.includes('font:8.5pt/1.13')&&html.includes('.assessment{height:9.4mm}'));
 const assessmentRows=[...html.matchAll(/<tr class="assessment">([\s\S]*?)<\/tr>/g)];
 for(const [,r] of assessmentRows){assert.equal((r.match(/class="square"/g)||[]).length,6);assert.equal((r.match(/class="options"/g)||[]).length,2);assert(!r.includes('>N/A</span>')&&!r.includes('>Não inspecionado</span>'));}
+for(const [,r] of assessmentRows){assert(/^<td class="num">\d+<\/td>/.test(r));assert(!r.includes('class="write-lines"'));}
+assert(assessmentRows[0][1].includes('Anomalia &lt;observada&gt;'));
+assert(assessmentRows[1][1].endsWith('<td></td>'));
 assert.equal((html.match(/<caption>/g)||[]).length,1);
 assert(html.includes('<thead>')&&html.includes('>NO</span>')&&html.includes('>MC</span>'));
 const files=F.entries(s,true),xml=files.find(f=>f.name.endsWith('sheet1.xml')).data;
